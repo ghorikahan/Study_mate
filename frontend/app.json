@@ -8,6 +8,10 @@
     "scheme": "studymate",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B0D12",
+    "splash": {
+      "backgroundColor": "#0B0D12",
+      "resizeMode": "contain"
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0B0D12",

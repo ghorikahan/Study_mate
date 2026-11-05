@@ -134,24 +134,18 @@ StudyMate/
 
 ---
 
-## 🗓️ 18-Day Milestone Plan
+## 🗓️ 18-Day Milestone Progress
 
-- **Day 1**: ✅ Project Initialization, Architecture, Backend Health & Dark Dashboard
-- **Day 2**: 🔒 User Registration, Login, JWT Authentication & SecureStore
-- **Day 3**: 📊 Dashboard Layout, Statistics & Quick Actions
-- **Day 4**: 📝 Study Planner Module & Subject Organization
-- **Day 5**: ✅ Task Management (CRUD, Prioritization, Deadlines)
-- **Day 6**: 📅 Weekly Study Timetable & Schedule Grid
-- **Day 7**: 🎯 Exam Countdown Tracker & Syllabus Manager
-- **Day 8**: ⏱️ Focus Study Timer (Pomodoro & Custom Sessions)
-- **Day 9**: 📈 Study Analytics & Visual Progress Charts
-- **Day 10**: 👤 User Profile, Preferences & Avatar Uploads
-- **Day 11**: 🔔 Study Reminders & Local Notifications
-- **Day 12**: 🔍 Global Search & Filtering
-- **Day 13**: 🌐 Offline Sync & Local Cache Resilience
-- **Day 14**: 🎨 Advanced UI Polish & Micro-interactions
-- **Day 15**: 🛡️ Security Audit, Input Sanitization & Error Boundaries
-- **Day 16**: 🧪 End-to-End Testing & Bug Squashing
-- **Day 17**: 🚀 Production Build Configuration & Performance Profiling
-- **Day 18**: 📦 Final College Project Submission & Presentation Packaging
+| Day | Status | Description |
+|-----|--------|-------------|
+| Day 1 | ✅ Done | Project initialization, folder architecture, Express backend, GET / & GET /api/health, MongoDB config (Atlas .env), Axios service, dark dashboard with real-time connection indicator |
+| Day 2 | ✅ Done | Reusable UI system (Button, Input, Card, Header, Badge, EmptyState, Loading), bottom tab navigation (Home, Planner, Tasks, Exams, Profile), polished empty states and responsive dark layouts |
+| Day 3–18 | 🔜 Upcoming | Authentication → Dashboard stats → CRUD features → Timer → Analytics → Profile → Notifications → Testing → Production |
 
+## 🗓️ 18-Day Milestone Progress
+
+| Day | Status | Description |
+|-----|--------|-------------|
+| Day 1 | ✅ Done | Project initialization, folder architecture, Express backend, GET / & GET /api/health, MongoDB config (Atlas .env), Axios service, dark dashboard with real-time connection indicator |
+| Day 2 | ✅ Done | Reusable UI system (Button, Input, Card, Header, Badge, EmptyState, Loading), bottom tab navigation (Home, Planner, Tasks, Exams, Profile), polished empty states and responsive dark layouts |
+| Day 3–18 | 🔜 Upcoming | Authentication → Dashboard stats → CRUD features → Timer → Analytics → Profile → Notifications → Testing → Production |
