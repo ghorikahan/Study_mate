@@ -55,10 +55,13 @@ StudyMate/
 │   │   └── db.js                 # MongoDB Atlas connection, lifecycle listeners & status diagnostics
 │   ├── controllers/
 │   │   ├── healthController.js   # GET /api/health and GET /api/database-status handlers
+│   │   ├── authController.js     # register, login, getMe, logout handlers
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
 │   │   ├── validator.js          # Request schema validation middleware (body, params, query)
+│   │   ├── protect.js            # JWT authentication middleware (Bearer token verification)
+│   │   ├── restrictTo.js         # Role-based authorization middleware (student/admin)
 │   │   └── index.js              # Middleware barrel export
 │   ├── models/
 │   │   ├── User.js               # User schema (bcrypt pre-save, comparePassword, streak, preferences)
@@ -70,16 +73,19 @@ StudyMate/
 │   │   └── index.js              # Models barrel export
 │   ├── routes/
 │   │   ├── healthRoutes.js       # /api/health & /api/database-status routes
+│   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
 │   │   ├── asyncHandler.js       # Async wrapper eliminating try/catch boilerplate
 │   │   ├── responseHandler.js    # Standardized successResponse & errorResponse helpers
+│   │   ├── jwtHelper.js          # generateToken & verifyToken helpers (JWT signing/verification)
 │   │   └── index.js              # Utilities barrel export
 │   ├── .env.example              # Template for environment variables (safe, no credentials)
 │   ├── package.json              # Backend dependencies & npm scripts
 │   ├── server.js                 # Express server entry point (CORS, body parsers, 404 handler)
 │   ├── test_backend.js           # Comprehensive Day 3 automated test suite (41/41 passing)
+│   ├── test_auth.js              # Day 4 authentication test suite (15/15 unit tests passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -136,6 +142,10 @@ StudyMate/
 | `GET` | `/` | API banner, documentation link & operational status | Public | `{ success: true, message, data }` |
 | `GET` | `/api/health` | Uptime, system memory (RSS, heap), version, and health status | Public | `{ success: true, message, data }` |
 | `GET` | `/api/database-status` | Real-time MongoDB Atlas status, host, name, and registered models | Public | `{ success: true, message, data }` |
+| `POST` | `/api/auth/register` | Create new account — validates name/email/password, hashes password, returns JWT | Public | `{ success, message, data: { token, user } }` |
+| `POST` | `/api/auth/login` | Authenticate — validates credentials, compares hashed password, returns JWT | Public | `{ success, message, data: { token, user } }` |
+| `GET` | `/api/auth/me` | Get current authenticated user profile (password never returned) | 🔒 Protected | `{ success, message, data: { user } }` |
+| `POST` | `/api/auth/logout` | Stateless logout — instructs client to delete stored token | 🔒 Protected | `{ success: true, message }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -169,6 +179,14 @@ StudyMate/
    ```bash
    npm test
    ```
+5. Run the Day 4 authentication test suite (unit tests run without MongoDB):
+   ```bash
+   npm run test:auth
+   ```
+6. Run all test suites at once:
+   ```bash
+   npm run test:all
+   ```
 
 ---
 
@@ -196,5 +214,6 @@ StudyMate/
 | **Day 1** | ✅ Done | Project initialization, folder architecture, Express backend, GET / & GET /api/health, MongoDB config (Atlas .env), Axios service, dark dashboard with real-time connection indicator |
 | **Day 2** | ✅ Done | Reusable UI system (Button, Input, Card, Header, Badge, EmptyState, Loading), bottom tab navigation (Home, Planner, Tasks, Exams, Profile), polished empty states and responsive dark layouts |
 | **Day 3** | ✅ Done | Express & MongoDB backend foundation: User, StudyPlan, Task, Exam, StudySession, Notification Mongoose models with timestamps & compound indexes, centralized error handling, request validator, consistent JSON responses, secure CORS, /api/health & /api/database-status diagnostic endpoints (41/41 test assertions passing) |
-| **Day 4** | 🔜 Up Next | User Authentication: Registration, Login, bcryptjs password hashing, JWT token issuance & verification middleware, Expo SecureStore token persistence |
-| **Day 5–18** | 🔜 Scheduled | Dashboard stats → Study Planner CRUD → Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
+| **Day 4** | ✅ Done | Secure Authentication APIs: POST /api/auth/register (bcrypt hashing, JWT), POST /api/auth/login (credential validation, generic errors), GET /api/auth/me (protect middleware, fresh user fetch), POST /api/auth/logout (stateless), JWT `protect` middleware, role-based `restrictTo` middleware, `jwtHelper` utility, 15/15 auth tests passing |
+| **Day 5** | 🔜 Up Next | Dashboard stats API → Study Planner CRUD |
+| **Day 5–18** | 🔜 Scheduled | Study Planner CRUD → Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
