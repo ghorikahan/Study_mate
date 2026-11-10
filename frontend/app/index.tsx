@@ -1,6 +1,17 @@
+import React from 'react';
 import { Redirect } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
 
-// Root index redirects to the tab layout home screen
-export default function Root() {
-  return <Redirect href="/(tabs)" />;
+export default function Index() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href={'/(tabs)' as any} />;
+  }
+
+  return <Redirect href={'/(auth)/login' as any} />;
 }

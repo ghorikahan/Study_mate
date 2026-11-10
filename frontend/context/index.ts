@@ -1,4 +1,2 @@
-// Context directory
-// AuthContext, ThemeContext, and StudyStateContext will be provided here in subsequent milestones.
-export {};
-
+export { AuthProvider, useAuth } from './AuthContext';
+export type { AuthContextType } from '../types/auth';

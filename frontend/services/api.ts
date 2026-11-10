@@ -1,5 +1,6 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { HealthResponse } from '../types/api';
+import { getToken } from './storage';
 
 /**
  * Default API Base URL configuration.
@@ -12,30 +13,56 @@ export const API_BASE_URL: string =
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 8000,
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 });
 
-// Request Interceptor: Attach auth tokens when available in later milestones
+// In-memory token cache for ultra-fast synchronous header injection
+let cachedToken: string | null = null;
+let unauthorizedCallback: (() => void) | null = null;
+
+export const setAuthToken = (token: string | null): void => {
+  cachedToken = token;
+};
+
+export const setOnUnauthorized = (callback: (() => void) | null): void => {
+  unauthorizedCallback = callback;
+};
+
+// Request Interceptor: Attach Bearer auth token if present
 apiClient.interceptors.request.use(
-  (config) => {
-    // Milestone 2 token injection will be handled here
+  async (config: InternalAxiosRequestConfig) => {
+    // Prefer memory cache, fallback to SecureStore
+    let token = cachedToken;
+    if (!token) {
+      token = await getToken();
+      if (token) cachedToken = token;
+    }
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Centralized error handling
+// Response Interceptor: Centralized error handling & 401 detection
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.code === 'ECONNABORTED') {
-      console.warn('[API] Request timed out');
+      console.warn('[API] Request timed out. Check server responsiveness.');
     } else if (!error.response) {
-      console.warn('[API] Network error - Is the backend server running and reachable?');
+      console.warn('[API] Network error - Is the backend server running and reachable at', apiClient.defaults.baseURL, '?');
+    } else if (error.response.status === 401) {
+      // Trigger logout if session has expired / invalid token
+      if (unauthorizedCallback) {
+        unauthorizedCallback();
+      }
     }
     return Promise.reject(error);
   }
@@ -51,4 +78,3 @@ export const fetchHealthCheck = async (customUrl?: string): Promise<HealthRespon
 };
 
 export default apiClient;
-

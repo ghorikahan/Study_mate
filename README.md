@@ -90,15 +90,19 @@ StudyMate/
 │
 ├── frontend/
 │   ├── app/                      # Expo Router navigation
-│   │   ├── (tabs)/               # Bottom tab navigation
+│   │   ├── (auth)/               # 🔐 Authentication screens
+│   │   │   ├── _layout.tsx       # Auth stack navigation layout
+│   │   │   ├── login.tsx         # Premium Login screen with validation & quick-fill demo
+│   │   │   └── register.tsx      # Registration screen with password strength bar
+│   │   ├── (tabs)/               # 📱 Bottom tab navigation
 │   │   │   ├── _layout.tsx       # Tab bar configuration & custom icons
 │   │   │   ├── index.tsx         # 🏠 Home tab (Greeting, streak stats, quick actions, empty states)
 │   │   │   ├── planner.tsx       # 📖 Planner tab (Subjects carousel, filter chips, study plans)
 │   │   │   ├── tasks.tsx         # ✅ Tasks tab (Task metrics, priority badges, overdue tracking)
 │   │   │   ├── exams.tsx         # 📅 Exams tab (Exam countdown banner, subject cards, prep tips)
-│   │   │   └── profile.tsx       # 👤 Profile tab (Avatar, study metrics, settings rows, sign out)
-│   │   ├── _layout.tsx           # Stack root with dark theme StatusBar
-│   │   └── index.tsx             # Root redirect to (tabs)
+│   │   │   └── profile.tsx       # 👤 Profile tab (User info, study metrics, settings rows, sign out)
+│   │   ├── _layout.tsx           # Root layout with AuthProvider, route protection & dark splash screen
+│   │   └── index.tsx             # Root auth redirect guard
 │   ├── components/               # Modular UI components
 │   │   ├── ui/                   # Reusable UI component library
 │   │   │   ├── Badge.tsx         # Color-coded badge pills with optional dot
@@ -116,13 +120,17 @@ StudyMate/
 │   │   ├── colors.ts             # Palette tokens & semantic variants
 │   │   └── theme.ts              # Spacing, Radius, FontSize, FontWeight & Shadow tokens
 │   ├── context/
-│   │   └── index.ts              # State management providers
+│   │   ├── AuthContext.tsx       # Authentication context, session restoration, login/register/logout
+│   │   └── index.ts              # Context barrel export
 │   ├── hooks/
 │   │   └── useBackendHealth.ts   # Custom health check hook with latency & error diagnostics
 │   ├── services/
-│   │   └── api.ts                # Central Axios client with EXPO_PUBLIC_API_URL
+│   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
+│   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
+│   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
+│   │   ├── auth.ts               # User, AuthState, AuthCredentials, Response interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -215,5 +223,6 @@ StudyMate/
 | **Day 2** | ✅ Done | Reusable UI system (Button, Input, Card, Header, Badge, EmptyState, Loading), bottom tab navigation (Home, Planner, Tasks, Exams, Profile), polished empty states and responsive dark layouts |
 | **Day 3** | ✅ Done | Express & MongoDB backend foundation: User, StudyPlan, Task, Exam, StudySession, Notification Mongoose models with timestamps & compound indexes, centralized error handling, request validator, consistent JSON responses, secure CORS, /api/health & /api/database-status diagnostic endpoints (41/41 test assertions passing) |
 | **Day 4** | ✅ Done | Secure Authentication APIs: POST /api/auth/register (bcrypt hashing, JWT), POST /api/auth/login (credential validation, generic errors), GET /api/auth/me (protect middleware, fresh user fetch), POST /api/auth/logout (stateless), JWT `protect` middleware, role-based `restrictTo` middleware, `jwtHelper` utility, 15/15 auth tests passing |
-| **Day 5** | 🔜 Up Next | Dashboard stats API → Study Planner CRUD |
-| **Day 5–18** | 🔜 Scheduled | Study Planner CRUD → Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
+| **Day 5** | ✅ Done | React Native Authentication Integration: Premium dark Login & Registration screens with validation & password strength indicator, AuthContext with session restoration & auto-refresh, Expo SecureStore JWT persistence, Axios Bearer token injection & 401 interceptors, reactive route protection & splash screen, Profile sign-out flow with confirmation modal |
+| **Day 6** | 🔜 Up Next | Dashboard Stats API & Dynamic Home Widgets |
+| **Day 7–18** | 🔜 Scheduled | Study Planner CRUD → Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |

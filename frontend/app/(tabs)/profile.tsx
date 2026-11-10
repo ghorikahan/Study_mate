@@ -5,10 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  User,
+  User as UserIcon,
   Settings,
   Bell,
   Shield,
@@ -24,6 +25,7 @@ import {
 import { Colors } from '../../constants/colors';
 import { Card, Badge } from '../../components/ui';
 import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
 
 // ─── Stat Card ─────────────────────────────────────────────────────────
 interface ProfileStatProps {
@@ -67,6 +69,34 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, value, onPress, 
 
 // ─── Main Screen ───────────────────────────────────────────────────────
 export default function ProfileScreen() {
+  const { user, logout } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of StudyMate?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (err) {
+              console.warn('Logout error:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const displayName = user?.name || 'Student';
+  const displayEmail = user?.email || 'student@studymate.app';
+  const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Student Scholar';
+  const streakCount = user?.studyStreak ?? 0;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* ── Header ── */}
@@ -85,14 +115,14 @@ export default function ProfileScreen() {
         {/* ── Avatar & Name ── */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrapper}>
-            <User size={40} color={Colors.primary} />
+            <UserIcon size={40} color={Colors.primary} />
             <View style={styles.avatarBadge}>
               <Star size={10} color={Colors.background} />
             </View>
           </View>
-          <Text style={styles.userName}>Student</Text>
-          <Text style={styles.userEmail}>student@studymate.app</Text>
-          <Badge label="Day 1 Learner" variant="primary" dot />
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userEmail}>{displayEmail}</Text>
+          <Badge label={roleLabel} variant="primary" dot />
         </View>
 
         {/* ── Stats Row ── */}
@@ -120,7 +150,7 @@ export default function ProfileScreen() {
             />
             <View style={styles.statDivider} />
             <ProfileStat
-              value="0"
+              value={`${streakCount}`}
               label="Streak"
               icon={<TrendingUp size={18} color={Colors.primary} />}
               color={Colors.primary}
@@ -132,7 +162,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionLabel}>Account</Text>
         <Card style={styles.settingsCard}>
           <SettingsRow
-            icon={<User size={18} color={Colors.primary} />}
+            icon={<UserIcon size={18} color={Colors.primary} />}
             label="Edit Profile"
             value="Coming Day 10"
             onPress={() => {}}
@@ -176,7 +206,7 @@ export default function ProfileScreen() {
           <SettingsRow
             icon={<LogOut size={18} color={Colors.error} />}
             label="Sign Out"
-            onPress={() => {}}
+            onPress={handleSignOut}
             destructive
           />
         </Card>
@@ -187,7 +217,7 @@ export default function ProfileScreen() {
           <Text style={styles.appInfoSub}>
             Plan Smart. Study Better. Achieve More.
           </Text>
-          <Text style={styles.appInfoSub}>Day 2 — UI Foundation Complete</Text>
+          <Text style={styles.appInfoSub}>Day 5 — Auth Integration Active</Text>
         </View>
 
         <View style={{ height: Spacing.xxxl }} />
