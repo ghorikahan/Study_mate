@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "node test_backend.js",
     "test:auth": "node test_auth.js",
-    "test:all": "node test_backend.js && node test_auth.js"
+    "test:dashboard": "node test_dashboard.js",
+    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

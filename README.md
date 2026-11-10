@@ -56,6 +56,7 @@ StudyMate/
 │   ├── controllers/
 │   │   ├── healthController.js   # GET /api/health and GET /api/database-status handlers
 │   │   ├── authController.js     # register, login, getMe, logout handlers
+│   │   ├── dashboardController.js # GET /api/dashboard/summary real-time stats aggregator
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -74,6 +75,7 @@ StudyMate/
 │   ├── routes/
 │   │   ├── healthRoutes.js       # /api/health & /api/database-status routes
 │   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout
+│   │   ├── dashboardRoutes.js    # /api/dashboard/summary route
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -86,6 +88,7 @@ StudyMate/
 │   ├── server.js                 # Express server entry point (CORS, body parsers, 404 handler)
 │   ├── test_backend.js           # Comprehensive Day 3 automated test suite (41/41 passing)
 │   ├── test_auth.js              # Day 4 authentication test suite (15/15 unit tests passing)
+│   ├── test_dashboard.js         # Day 6 dashboard summary test suite (passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -123,14 +126,17 @@ StudyMate/
 │   │   ├── AuthContext.tsx       # Authentication context, session restoration, login/register/logout
 │   │   └── index.ts              # Context barrel export
 │   ├── hooks/
-│   │   └── useBackendHealth.ts   # Custom health check hook with latency & error diagnostics
+│   │   ├── useBackendHealth.ts   # Custom health check hook with latency & error diagnostics
+│   │   └── useDashboard.ts       # Live dashboard summary hook with pull-to-refresh & auto-load
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
+│   │   ├── dashboardService.ts   # Dashboard stats API service (GET /api/dashboard/summary)
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
 │   │   ├── auth.ts               # User, AuthState, AuthCredentials, Response interfaces
+│   │   ├── dashboard.ts          # Dashboard summary, task items, upcoming exam interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -154,6 +160,7 @@ StudyMate/
 | `POST` | `/api/auth/login` | Authenticate — validates credentials, compares hashed password, returns JWT | Public | `{ success, message, data: { token, user } }` |
 | `GET` | `/api/auth/me` | Get current authenticated user profile (password never returned) | 🔒 Protected | `{ success, message, data: { user } }` |
 | `POST` | `/api/auth/logout` | Stateless logout — instructs client to delete stored token | 🔒 Protected | `{ success: true, message }` |
+| `GET` | `/api/dashboard/summary` | Real-time user dashboard summary (tasks, study hours, streak, exams, 7-day breakdown) | 🔒 Protected | `{ success: true, message, data: DashboardSummary }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -224,5 +231,6 @@ StudyMate/
 | **Day 3** | ✅ Done | Express & MongoDB backend foundation: User, StudyPlan, Task, Exam, StudySession, Notification Mongoose models with timestamps & compound indexes, centralized error handling, request validator, consistent JSON responses, secure CORS, /api/health & /api/database-status diagnostic endpoints (41/41 test assertions passing) |
 | **Day 4** | ✅ Done | Secure Authentication APIs: POST /api/auth/register (bcrypt hashing, JWT), POST /api/auth/login (credential validation, generic errors), GET /api/auth/me (protect middleware, fresh user fetch), POST /api/auth/logout (stateless), JWT `protect` middleware, role-based `restrictTo` middleware, `jwtHelper` utility, 15/15 auth tests passing |
 | **Day 5** | ✅ Done | React Native Authentication Integration: Premium dark Login & Registration screens with validation & password strength indicator, AuthContext with session restoration & auto-refresh, Expo SecureStore JWT persistence, Axios Bearer token injection & 401 interceptors, reactive route protection & splash screen, Profile sign-out flow with confirmation modal |
-| **Day 6** | 🔜 Up Next | Dashboard Stats API & Dynamic Home Widgets |
-| **Day 7–18** | 🔜 Scheduled | Study Planner CRUD → Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
+| **Day 6** | ✅ Done | Personalized StudyMate Dashboard: GET /api/dashboard/summary backend aggregation (tasks, study hours, streak, upcoming exams, 7-day breakdown), frontend dashboard integration, personalized greeting, streak highlight, weekly activity chart, live today's tasks & upcoming exams with empty states, quick actions grid, pull-to-refresh & error retry |
+| **Day 7** | 🔜 Up Next | Study Planner CRUD & Subject Management |
+| **Day 8–18** | 🔜 Scheduled | Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |

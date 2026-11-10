@@ -134,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           } else {
             // Network error (offline) - keep cached user so student can use app offline
-            console.warn('[AuthContext] Offline or unreachable, preserving cached user session.');
+            console.warn('[AuthContext] Offline or unreachable, preserving cached user session.');  
             if (isMounted && storedToken) {
               setToken(storedToken);
             }

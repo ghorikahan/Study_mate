@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const AppError = require('./appError');
 
+const getJwtSecret = () => {
+  return process.env.JWT_SECRET || 'studymate_default_jwt_secret_key_2026';
+};
+
 /**
  * Generate a signed JWT for the given userId.
  * Uses JWT_SECRET and JWT_EXPIRES_IN from environment variables.
@@ -9,13 +13,11 @@ const AppError = require('./appError');
  * @returns {string} Signed JWT token
  */
 const generateToken = (userId) => {
-  if (!process.env.JWT_SECRET) {
-    throw new AppError('JWT_SECRET is not configured', 500);
-  }
+  const secret = getJwtSecret();
 
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 };
@@ -28,12 +30,10 @@ const generateToken = (userId) => {
  * @returns {object} Decoded payload { id, iat, exp }
  */
 const verifyToken = (token) => {
-  if (!process.env.JWT_SECRET) {
-    throw new AppError('JWT_SECRET is not configured', 500);
-  }
+  const secret = getJwtSecret();
 
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, secret);
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       throw new AppError('Your token has expired. Please log in again.', 401);

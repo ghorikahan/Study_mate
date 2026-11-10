@@ -140,7 +140,7 @@ export default function ExamsScreen() {
               </TouchableOpacity>
             );
           })}
-          
+
         </View>
 
         {/* ── Exam Prep Tip ── */}
