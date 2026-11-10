@@ -8,3 +8,4 @@ const { protect } = require('../middleware');
 router.get('/summary', protect, dashboardController.getDashboardSummary);
 
 module.exports = router;
+
