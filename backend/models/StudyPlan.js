@@ -49,6 +49,25 @@ const studyPlanSchema = new mongoose.Schema(
       required: [true, 'Subject is required'],
       trim: true,
     },
+    topic: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+    startTime: {
+      type: String,
+      trim: true,
+      default: '09:00 AM',
+    },
+    duration: {
+      type: Number,
+      default: 60,
+      min: [5, 'Duration must be at least 5 minutes'],
+    },
     color: {
       type: String,
       default: '#8B5CF6',
@@ -64,8 +83,8 @@ const studyPlanSchema = new mongoose.Schema(
     priority: {
       type: String,
       enum: {
-        values: ['low', 'medium', 'high'],
-        message: 'Priority must be low, medium, or high',
+        values: ['low', 'medium', 'high', 'urgent'],
+        message: 'Priority must be low, medium, high, or urgent',
       },
       default: 'medium',
     },
@@ -75,7 +94,9 @@ const studyPlanSchema = new mongoose.Schema(
     },
     targetCompletionDate: {
       type: Date,
-      required: [true, 'Target completion date is required'],
+      default: function () {
+        return this.date || new Date();
+      },
     },
     totalEstimatedHours: {
       type: Number,
@@ -101,6 +122,19 @@ const studyPlanSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+// Pre-validate hook to keep title and topic in sync
+studyPlanSchema.pre('validate', function (next) {
+  if (!this.title && this.topic) {
+    this.title = this.topic;
+  } else if (!this.topic && this.title) {
+    this.topic = this.title;
+  }
+  if (!this.targetCompletionDate && this.date) {
+    this.targetCompletionDate = this.date;
+  }
+  next();
+});
 
 // Virtual for completion percentage
 studyPlanSchema.virtual('progressPercent').get(function () {

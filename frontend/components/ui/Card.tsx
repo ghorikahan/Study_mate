@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { Radius, Spacing } from '../../constants/theme';
 
@@ -8,7 +8,7 @@ export type CardVariant = 'default' | 'elevated' | 'outlined' | 'flat';
 interface CardProps {
   children: React.ReactNode;
   variant?: CardVariant;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   padding?: number;
 }
 

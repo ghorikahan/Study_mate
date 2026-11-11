@@ -57,6 +57,7 @@ StudyMate/
 │   │   ├── healthController.js   # GET /api/health and GET /api/database-status handlers
 │   │   ├── authController.js     # register, login, getMe, logout handlers
 │   │   ├── dashboardController.js # GET /api/dashboard/summary real-time stats aggregator
+│   │   ├── studyPlanController.js # Full CRUD study plan handlers with user ownership isolation
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -66,7 +67,7 @@ StudyMate/
 │   │   └── index.js              # Middleware barrel export
 │   ├── models/
 │   │   ├── User.js               # User schema (bcrypt pre-save, comparePassword, streak, preferences)
-│   │   ├── StudyPlan.js          # StudyPlan schema (milestones, subject, status, progressPercent virtual)
+│   │   ├── StudyPlan.js          # StudyPlan schema (subject, topic, date, startTime, duration, priority, status)
 │   │   ├── Task.js               # Task schema (priority, deadline, isOverdue virtual, auto-sync completedAt)
 │   │   ├── Exam.js               # Exam schema (countdown daysRemaining & syllabusProgressPercent virtuals)
 │   │   ├── StudySession.js       # StudySession schema (pomodoro/stopwatch tracking, focus rating, duration)
@@ -76,6 +77,7 @@ StudyMate/
 │   │   ├── healthRoutes.js       # /api/health & /api/database-status routes
 │   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout
 │   │   ├── dashboardRoutes.js    # /api/dashboard/summary route
+│   │   ├── studyPlanRoutes.js    # Full CRUD study plan routes (GET, POST, PUT, PATCH, DELETE)
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -89,6 +91,7 @@ StudyMate/
 │   ├── test_backend.js           # Comprehensive Day 3 automated test suite (41/41 passing)
 │   ├── test_auth.js              # Day 4 authentication test suite (15/15 unit tests passing)
 │   ├── test_dashboard.js         # Day 6 dashboard summary test suite (passing)
+│   ├── test_study_plans.js       # Day 7 study planner CRUD test suite (passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -118,7 +121,8 @@ StudyMate/
 │   │   │   └── index.ts          # UI library barrel export
 │   │   ├── ConnectionIndicator.tsx # Live API connection pill & ping latency
 │   │   ├── DashboardHeader.tsx   # StudyMate branding & tagline
-│   │   └── RoadmapCard.tsx       # 18-day feature tracker card
+│   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
+│   │   └── StudyPlanModal.tsx    # Create & Edit Study Plan modal with input validation & presets
 │   ├── constants/
 │   │   ├── colors.ts             # Palette tokens & semantic variants
 │   │   └── theme.ts              # Spacing, Radius, FontSize, FontWeight & Shadow tokens
@@ -127,16 +131,19 @@ StudyMate/
 │   │   └── index.ts              # Context barrel export
 │   ├── hooks/
 │   │   ├── useBackendHealth.ts   # Custom health check hook with latency & error diagnostics
-│   │   └── useDashboard.ts       # Live dashboard summary hook with pull-to-refresh & auto-load
+│   │   ├── useDashboard.ts       # Live dashboard summary hook with pull-to-refresh & auto-load
+│   │   └── useStudyPlans.ts      # Study planner hook with CRUD handlers, filters & state management
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
 │   │   ├── dashboardService.ts   # Dashboard stats API service (GET /api/dashboard/summary)
+│   │   ├── studyPlanService.ts   # Study planner REST client (create, read, update, delete, toggle)
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
 │   │   ├── auth.ts               # User, AuthState, AuthCredentials, Response interfaces
 │   │   ├── dashboard.ts          # Dashboard summary, task items, upcoming exam interfaces
+│   │   ├── studyPlan.ts          # StudyPlan, inputs, filters, and response interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -161,6 +168,12 @@ StudyMate/
 | `GET` | `/api/auth/me` | Get current authenticated user profile (password never returned) | 🔒 Protected | `{ success, message, data: { user } }` |
 | `POST` | `/api/auth/logout` | Stateless logout — instructs client to delete stored token | 🔒 Protected | `{ success: true, message }` |
 | `GET` | `/api/dashboard/summary` | Real-time user dashboard summary (tasks, study hours, streak, exams, 7-day breakdown) | 🔒 Protected | `{ success: true, message, data: DashboardSummary }` |
+| `POST` | `/api/study-plans` | Create study plan (subject, topic, date, startTime, duration, priority) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
+| `GET` | `/api/study-plans` | Read user study plans with subject, priority, date, and search filters | 🔒 Protected | `{ success: true, message, data: { studyPlans, total, subjects } }` |
+| `GET` | `/api/study-plans/:id` | Read single study plan (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
+| `PUT` | `/api/study-plans/:id` | Update study plan fields (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
+| `PATCH` | `/api/study-plans/:id/status` | Quick toggle study plan status (active <-> completed) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
+| `DELETE` | `/api/study-plans/:id` | Delete study plan (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -232,5 +245,6 @@ StudyMate/
 | **Day 4** | ✅ Done | Secure Authentication APIs: POST /api/auth/register (bcrypt hashing, JWT), POST /api/auth/login (credential validation, generic errors), GET /api/auth/me (protect middleware, fresh user fetch), POST /api/auth/logout (stateless), JWT `protect` middleware, role-based `restrictTo` middleware, `jwtHelper` utility, 15/15 auth tests passing |
 | **Day 5** | ✅ Done | React Native Authentication Integration: Premium dark Login & Registration screens with validation & password strength indicator, AuthContext with session restoration & auto-refresh, Expo SecureStore JWT persistence, Axios Bearer token injection & 401 interceptors, reactive route protection & splash screen, Profile sign-out flow with confirmation modal |
 | **Day 6** | ✅ Done | Personalized StudyMate Dashboard: GET /api/dashboard/summary backend aggregation (tasks, study hours, streak, upcoming exams, 7-day breakdown), frontend dashboard integration, personalized greeting, streak highlight, weekly activity chart, live today's tasks & upcoming exams with empty states, quick actions grid, pull-to-refresh & error retry |
-| **Day 7** | 🔜 Up Next | Study Planner CRUD & Subject Management |
-| **Day 8–18** | 🔜 Scheduled | Task Management → Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
+| **Day 7** | ✅ Done | Complete Study Planner Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/study-plans) with strict user ownership isolation, Mongoose schema with subject/topic/date/startTime/duration/priority, frontend StudyPlanModal (create & edit with validation), dynamic subject chips filter, status/date tabs, search bar, completion toggle, pull-to-refresh, empty states, and comprehensive test suite passing |
+| **Day 8** | 🔜 Up Next | Smart Task Management Module (CRUD, Priority Badges, Due Dates, Overdue Alerts) |
+| **Day 9–18** | 🔜 Scheduled | Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
