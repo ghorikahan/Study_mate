@@ -10,7 +10,8 @@
     "test:auth": "node test_auth.js",
     "test:dashboard": "node test_dashboard.js",
     "test:planner": "node test_study_plans.js",
-    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js"
+    "test:tasks": "node test_tasks.js",
+    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js && node test_tasks.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

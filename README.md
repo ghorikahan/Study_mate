@@ -58,6 +58,7 @@ StudyMate/
 │   │   ├── authController.js     # register, login, getMe, logout handlers
 │   │   ├── dashboardController.js # GET /api/dashboard/summary real-time stats aggregator
 │   │   ├── studyPlanController.js # Full CRUD study plan handlers with user ownership isolation
+│   │   ├── taskController.js     # Full CRUD task handlers (create, read, update, toggle, delete, overdue)
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -78,6 +79,7 @@ StudyMate/
 │   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout
 │   │   ├── dashboardRoutes.js    # /api/dashboard/summary route
 │   │   ├── studyPlanRoutes.js    # Full CRUD study plan routes (GET, POST, PUT, PATCH, DELETE)
+│   │   ├── taskRoutes.js         # Full CRUD task routes with toggle status (GET, POST, PUT, PATCH, DELETE)
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -92,6 +94,7 @@ StudyMate/
 │   ├── test_auth.js              # Day 4 authentication test suite (15/15 unit tests passing)
 │   ├── test_dashboard.js         # Day 6 dashboard summary test suite (passing)
 │   ├── test_study_plans.js       # Day 7 study planner CRUD test suite (passing)
+│   ├── test_tasks.js             # Day 8 task management test suite (passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -104,7 +107,7 @@ StudyMate/
 │   │   │   ├── _layout.tsx       # Tab bar configuration & custom icons
 │   │   │   ├── index.tsx         # 🏠 Home tab (Greeting, streak stats, quick actions, empty states)
 │   │   │   ├── planner.tsx       # 📖 Planner tab (Subjects carousel, filter chips, study plans)
-│   │   │   ├── tasks.tsx         # ✅ Tasks tab (Task metrics, priority badges, overdue tracking)
+│   │   │   ├── tasks.tsx         # ✅ Tasks tab (Metrics banner, search, status/subject filters, CRUD, overdue alerts)
 │   │   │   ├── exams.tsx         # 📅 Exams tab (Exam countdown banner, subject cards, prep tips)
 │   │   │   └── profile.tsx       # 👤 Profile tab (User info, study metrics, settings rows, sign out)
 │   │   ├── _layout.tsx           # Root layout with AuthProvider, route protection & dark splash screen
@@ -122,7 +125,8 @@ StudyMate/
 │   │   ├── ConnectionIndicator.tsx # Live API connection pill & ping latency
 │   │   ├── DashboardHeader.tsx   # StudyMate branding & tagline
 │   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
-│   │   └── StudyPlanModal.tsx    # Create & Edit Study Plan modal with input validation & presets
+│   │   ├── StudyPlanModal.tsx    # Create & Edit Study Plan modal with input validation & presets
+│   │   └── TaskModal.tsx         # Create & Edit Task modal with subject suggestions, date chips, priority selector
 │   ├── constants/
 │   │   ├── colors.ts             # Palette tokens & semantic variants
 │   │   └── theme.ts              # Spacing, Radius, FontSize, FontWeight & Shadow tokens
@@ -132,18 +136,21 @@ StudyMate/
 │   ├── hooks/
 │   │   ├── useBackendHealth.ts   # Custom health check hook with latency & error diagnostics
 │   │   ├── useDashboard.ts       # Live dashboard summary hook with pull-to-refresh & auto-load
-│   │   └── useStudyPlans.ts      # Study planner hook with CRUD handlers, filters & state management
+│   │   ├── useStudyPlans.ts      # Study planner hook with CRUD handlers, filters & state management
+│   │   └── useTasks.ts           # Task management hook with CRUD, optimistic updates & filter state
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
 │   │   ├── dashboardService.ts   # Dashboard stats API service (GET /api/dashboard/summary)
 │   │   ├── studyPlanService.ts   # Study planner REST client (create, read, update, delete, toggle)
+│   │   ├── taskService.ts        # Task REST client (getTasks, createTask, updateTask, toggleStatus, deleteTask)
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
 │   │   ├── auth.ts               # User, AuthState, AuthCredentials, Response interfaces
 │   │   ├── dashboard.ts          # Dashboard summary, task items, upcoming exam interfaces
 │   │   ├── studyPlan.ts          # StudyPlan, inputs, filters, and response interfaces
+│   │   ├── task.ts               # Task, TaskPriority, TaskStatus, TaskCounts, filters, response interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -174,6 +181,12 @@ StudyMate/
 | `PUT` | `/api/study-plans/:id` | Update study plan fields (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
 | `PATCH` | `/api/study-plans/:id/status` | Quick toggle study plan status (active <-> completed) | 🔒 Protected | `{ success: true, message, data: { studyPlan } }` |
 | `DELETE` | `/api/study-plans/:id` | Delete study plan (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
+| `POST` | `/api/tasks` | Create task (title, subject, dueDate, estimatedMinutes, priority, notes) | 🔒 Protected | `{ success: true, message, data: { task } }` |
+| `GET` | `/api/tasks` | Read user tasks with status/priority/subject/search/sort filters & counts | 🔒 Protected | `{ success: true, message, data: { tasks, counts, subjects, total } }` |
+| `GET` | `/api/tasks/:id` | Read single task (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { task } }` |
+| `PUT` | `/api/tasks/:id` | Update task fields (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { task } }` |
+| `PATCH` | `/api/tasks/:id/toggle` | Toggle task status (pending ↔ completed, auto-syncs completedAt) | 🔒 Protected | `{ success: true, message, data: { task } }` |
+| `DELETE` | `/api/tasks/:id` | Delete task (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -246,5 +259,5 @@ StudyMate/
 | **Day 5** | ✅ Done | React Native Authentication Integration: Premium dark Login & Registration screens with validation & password strength indicator, AuthContext with session restoration & auto-refresh, Expo SecureStore JWT persistence, Axios Bearer token injection & 401 interceptors, reactive route protection & splash screen, Profile sign-out flow with confirmation modal |
 | **Day 6** | ✅ Done | Personalized StudyMate Dashboard: GET /api/dashboard/summary backend aggregation (tasks, study hours, streak, upcoming exams, 7-day breakdown), frontend dashboard integration, personalized greeting, streak highlight, weekly activity chart, live today's tasks & upcoming exams with empty states, quick actions grid, pull-to-refresh & error retry |
 | **Day 7** | ✅ Done | Complete Study Planner Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/study-plans) with strict user ownership isolation, Mongoose schema with subject/topic/date/startTime/duration/priority, frontend StudyPlanModal (create & edit with validation), dynamic subject chips filter, status/date tabs, search bar, completion toggle, pull-to-refresh, empty states, and comprehensive test suite passing |
-| **Day 8** | 🔜 Up Next | Smart Task Management Module (CRUD, Priority Badges, Due Dates, Overdue Alerts) |
+| **Day 8** | ✅ Done | Smart Task Management Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/tasks) with strict user ownership & overdue detection, priority system (urgent/high/medium/low), completion toggle (pending ↔ completed) with auto-sync completedAt, frontend TaskModal with subject suggestions/date chips/duration presets, task metrics banner, live search, status & subject filter chips, confirmation dialogs, pull-to-refresh, overdue red-alert styling, 0 TypeScript errors, all 68 backend tests passing |
 | **Day 9–18** | 🔜 Scheduled | Timetable → Exam Countdown Tracker → Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
