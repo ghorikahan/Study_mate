@@ -22,3 +22,4 @@ router
 router.patch('/:id/status', studyPlanController.toggleStudyPlanStatus);
 
 module.exports = router;
+
