@@ -68,6 +68,14 @@ const examSchema = new mongoose.Schema(
       max: [100, 'Target score cannot exceed 100'],
       default: null,
     },
+    priority: {
+      type: String,
+      enum: {
+        values: ['urgent', 'high', 'medium', 'low'],
+        message: 'Priority must be urgent, high, medium, or low',
+      },
+      default: 'medium',
+    },
     actualScore: {
       type: Number,
       min: [0, 'Actual score cannot be negative'],

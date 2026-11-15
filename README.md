@@ -60,6 +60,7 @@ StudyMate/
 │   │   ├── studyPlanController.js # Full CRUD study plan handlers with user ownership isolation
 │   │   ├── taskController.js     # Full CRUD task handlers (create, read, update, toggle, delete, overdue)
 │   │   ├── timetableController.js # Full CRUD timetable handlers (weekly view, day view, overlap detection)
+│   │   ├── examController.js     # Full CRUD exam handlers (create, read, update, delete, topic toggle, countdowns)
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -83,6 +84,7 @@ StudyMate/
 │   │   ├── studyPlanRoutes.js    # Full CRUD study plan routes (GET, POST, PUT, PATCH, DELETE)
 │   │   ├── taskRoutes.js         # Full CRUD task routes with toggle status (GET, POST, PUT, PATCH, DELETE)
 │   │   ├── timetableRoutes.js    # Weekly timetable & calendar routes (GET, POST, PUT, DELETE /api/timetable)
+│   │   ├── examRoutes.js         # Exam Tracker routes (GET, POST, PUT, DELETE, PATCH topics)
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -99,6 +101,7 @@ StudyMate/
 │   ├── test_study_plans.js       # Day 7 study planner CRUD test suite (passing)
 │   ├── test_tasks.js             # Day 8 task management test suite (passing)
 │   ├── test_timetable.js         # Day 9 weekly timetable test suite (28/28 passing)
+│   ├── test_exams.js             # Day 10 exam tracker test suite (40/40 passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -112,7 +115,7 @@ StudyMate/
 │   │   │   ├── index.tsx         # 🏠 Home tab (Greeting, streak stats, quick actions, empty states)
 │   │   │   ├── planner.tsx       # 📖 Planner tab (Subjects carousel, filter chips, study plans)
 │   │   │   ├── tasks.tsx         # ✅ Tasks tab (Metrics banner, search, status/subject filters, CRUD, overdue alerts)
-│   │   │   ├── exams.tsx         # 📅 Exams tab (Exam countdown banner, subject cards, prep tips)
+│   │   │   ├── exams.tsx         # 📅 Exams tab (Exam countdown banner, urgency alerts, syllabus progress, CRUD)
 │   │   │   └── profile.tsx       # 👤 Profile tab (User info, study metrics, settings rows, sign out)
 │   │   ├── _layout.tsx           # Root layout with AuthProvider, route protection & dark splash screen
 │   │   ├── index.tsx             # Root auth redirect guard
@@ -132,7 +135,8 @@ StudyMate/
 │   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
 │   │   ├── ScheduleModal.tsx     # Add & Edit Study Session modal with overlap validation, duration & color chips
 │   │   ├── StudyPlanModal.tsx    # Create & Edit Study Plan modal with input validation & presets
-│   │   └── TaskModal.tsx         # Create & Edit Task modal with subject suggestions, date chips, priority selector
+│   │   ├── TaskModal.tsx         # Create & Edit Task modal with subject suggestions, date chips, priority selector
+│   │   └── ExamModal.tsx         # Create & Edit Exam modal with syllabus topics, priority, score & duration
 │   ├── constants/
 │   │   ├── colors.ts             # Palette tokens & semantic variants
 │   │   └── theme.ts              # Spacing, Radius, FontSize, FontWeight & Shadow tokens
@@ -144,7 +148,8 @@ StudyMate/
 │   │   ├── useDashboard.ts       # Live dashboard summary hook with pull-to-refresh & auto-load
 │   │   ├── useStudyPlans.ts      # Study planner hook with CRUD handlers, filters & state management
 │   │   ├── useTasks.ts           # Task management hook with CRUD, optimistic updates & filter state
-│   │   └── useTimetable.ts       # Weekly timetable hook with week navigation, day filtering & CRUD operations
+│   │   ├── useTimetable.ts       # Weekly timetable hook with week navigation, day filtering & CRUD operations
+│   │   └── useExams.ts           # Exam tracker hook with CRUD, topic toggle, filters & state management
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
@@ -152,6 +157,7 @@ StudyMate/
 │   │   ├── studyPlanService.ts   # Study planner REST client (create, read, update, delete, toggle)
 │   │   ├── taskService.ts        # Task REST client (getTasks, createTask, updateTask, toggleStatus, deleteTask)
 │   │   ├── timetableService.ts   # Weekly timetable REST client (getWeekly, getDay, create, update, delete)
+│   │   ├── examService.ts        # Exam REST client (getExams, createExam, updateExam, toggleSyllabusTopic, deleteExam)
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
@@ -160,6 +166,7 @@ StudyMate/
 │   │   ├── studyPlan.ts          # StudyPlan, inputs, filters, and response interfaces
 │   │   ├── task.ts               # Task, TaskPriority, TaskStatus, TaskCounts, filters, response interfaces
 │   │   ├── timetable.ts          # TimetableEntry, DaySchedule, WeeklyTimetableData, inputs & responses
+│   │   ├── exam.ts               # Exam, SyllabusTopic, ExamPriority, ExamStatus, inputs & responses
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -202,6 +209,12 @@ StudyMate/
 | `GET` | `/api/timetable/:id` | Get single timetable entry (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { entry } }` |
 | `PUT` | `/api/timetable/:id` | Update timetable entry with slot overlap validation | 🔒 Protected | `{ success: true, message, data: { entry } }` |
 | `DELETE` | `/api/timetable/:id` | Delete timetable entry (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
+| `POST` | `/api/exams` | Create exam (examTitle, subject, examDate, startTime, duration, priority, syllabusTopics, notes) | 🔒 Protected | `{ success: true, message, data: { exam } }` |
+| `GET` | `/api/exams` | Read user exams with status/subject/search filters & summary counts | 🔒 Protected | `{ success: true, message, data: { exams, total, subjects, counts } }` |
+| `GET` | `/api/exams/:id` | Read single exam (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { exam } }` |
+| `PUT` | `/api/exams/:id` | Update exam fields (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { exam } }` |
+| `PATCH` | `/api/exams/:id/topics/:topicId` | Toggle syllabus topic covered status | 🔒 Protected | `{ success: true, message, data: { exam } }` |
+| `DELETE` | `/api/exams/:id` | Delete exam (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -276,5 +289,6 @@ StudyMate/
 | **Day 7** | ✅ Done | Complete Study Planner Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/study-plans) with strict user ownership isolation, Mongoose schema with subject/topic/date/startTime/duration/priority, frontend StudyPlanModal (create & edit with validation), dynamic subject chips filter, status/date tabs, search bar, completion toggle, pull-to-refresh, empty states, and comprehensive test suite passing |
 | **Day 8** | ✅ Done | Smart Task Management Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/tasks) with strict user ownership & overdue detection, priority system (urgent/high/medium/low), completion toggle (pending ↔ completed) with auto-sync completedAt, frontend TaskModal with subject suggestions/date chips/duration presets, task metrics banner, live search, status & subject filter chips, confirmation dialogs, pull-to-refresh, overdue red-alert styling, 0 TypeScript errors, all 68 backend tests passing |
 | **Day 9** | ✅ Done | Weekly Timetable & Calendar Module: Full Monday–Sunday view, CRUD REST APIs (POST, GET, PUT, DELETE /api/timetable) with user ownership isolation, intelligent overlapping time-slot conflict detection, HH:MM format & minimum duration validation, ScheduleModal with duration presets & subject colors, day strip with today highlight, planned study hours weekly chart, 0 TypeScript errors, 28/28 timetable unit tests passing (96 total assertions) |
-| **Day 10** | 🔜 Up Next | Exam Countdown Tracker Module (Exam CRUD, Countdown Timers, Syllabus Progress, Urgent Alerts) |
-| **Day 11–18** | 🔜 Scheduled | Focus Timer → Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
+| **Day 10** | ✅ Done | Exam Countdown Tracker Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/exams) with user ownership, days remaining & local countdown calculation, syllabus topic management & progress percentage tracking, priority levels (urgent/high/medium/low), target score tracking, frontend ExamModal with topic checklist & duration presets, urgency alerts (≤3 days), status tabs & subject filtering, 0 TypeScript errors, 40/40 unit tests passing (136 total assertions) |
+| **Day 11** | 🔜 Up Next | Focus Timer Module: Pomodoro & Custom Stopwatch Timers, Study Session Logging, Break Intervals |
+| **Day 12–18** | 🔜 Scheduled | Analytics & Charts → Profile & Settings → Notifications → Testing → Production |
