@@ -66,3 +66,4 @@ export const useAnalytics = (initialRange: '7d' | '30d' | 'all' = '7d'): UseAnal
 };
 
 export default useAnalytics;
+

@@ -11,3 +11,4 @@ router.get('/overview', getAnalyticsOverview);
 router.get('/', getAnalyticsOverview); // Default to overview
 
 module.exports = router;
+
