@@ -370,3 +370,4 @@ exports.deleteStudySession = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error while deleting session' });
   }
 };
+
