@@ -62,6 +62,7 @@ StudyMate/
 │   │   ├── timetableController.js # Full CRUD timetable handlers (weekly view, day view, overlap detection)
 │   │   ├── examController.js     # Full CRUD exam handlers (create, read, update, delete, topic toggle, countdowns)
 │   │   ├── studySessionController.js # Focus timer session handlers (Pomodoro logging, stats, streak update, deduplication)
+│   │   ├── analyticsController.js # Day 12 Analytics module aggregation (daily breakdown, subject distribution, productivity score)
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -87,6 +88,7 @@ StudyMate/
 │   │   ├── timetableRoutes.js    # Weekly timetable & calendar routes (GET, POST, PUT, DELETE /api/timetable)
 │   │   ├── examRoutes.js         # Exam Tracker routes (GET, POST, PUT, DELETE, PATCH topics)
 │   │   ├── studySessionRoutes.js # Focus timer & study session routes (GET, POST, /stats, DELETE)
+│   │   ├── analyticsRoutes.js    # Analytics overview routes (GET /api/analytics/overview with 7d/30d/all filters)
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -105,6 +107,7 @@ StudyMate/
 │   ├── test_timetable.js         # Day 9 weekly timetable test suite (28/28 passing)
 │   ├── test_exams.js             # Day 10 exam tracker test suite (40/40 passing)
 │   ├── test_focus_timer.js       # Day 11 focus timer & pomodoro test suite (45/45 passing)
+│   ├── test_analytics.js         # Day 12 analytics aggregation test suite (36/36 passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -123,7 +126,8 @@ StudyMate/
 │   │   ├── _layout.tsx           # Root layout with AuthProvider, route protection & dark splash screen
 │   │   ├── index.tsx             # Root auth redirect guard
 │   │   ├── timetable.tsx         # 📅 Weekly Timetable & Calendar screen (Mon–Sun strip, daily sessions, bar chart)
-│   │   └── focus.tsx             # ⏱️ Focus Timer screen (Pomodoro 25m/5m/15m, subject picker, circular timer, stats)
+│   │   ├── focus.tsx             # ⏱️ Focus Timer screen (Pomodoro 25m/5m/15m, subject picker, circular timer, stats)
+│   │   └── analytics.tsx         # 📊 StudyMate Analytics screen (Time filter, study hours chart, subject distribution, task metrics)
 │   ├── components/               # Modular UI components
 │   │   ├── ui/                   # Reusable UI component library
 │   │   │   ├── Badge.tsx         # Color-coded badge pills with optional dot
@@ -134,6 +138,11 @@ StudyMate/
 │   │   │   ├── Input.tsx         # Form input with focus states, error text & icon slots
 │   │   │   ├── Loading.tsx       # Activity spinner & full-screen loading overlay
 │   │   │   └── index.ts          # UI library barrel export
+│   │   ├── analytics/            # 📊 Day 12 Analytics component module
+│   │   │   ├── StudyHoursChart.tsx # Daily study hours responsive bar chart with target line & tooltips
+│   │   │   ├── SubjectDistributionCard.tsx # Subject time distribution stacked bar & detailed breakdown
+│   │   │   ├── TaskCompletionCard.tsx # Overall task metrics & completion progress bar
+│   │   │   └── MonthlyProgressCard.tsx # Monthly study hours target card with remaining milestone
 │   │   ├── ConnectionIndicator.tsx # Live API connection pill & ping latency
 │   │   ├── DashboardHeader.tsx   # StudyMate branding & tagline
 │   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
@@ -155,7 +164,8 @@ StudyMate/
 │   │   ├── useTasks.ts           # Task management hook with CRUD, optimistic updates & filter state
 │   │   ├── useTimetable.ts       # Weekly timetable hook with week navigation, day filtering & CRUD operations
 │   │   ├── useExams.ts           # Exam tracker hook with CRUD, topic toggle, filters & state management
-│   │   └── useFocusTimer.ts      # Focus timer hook with background sync, wall-clock restoration & Pomodoro cycles
+│   │   ├── useFocusTimer.ts      # Focus timer hook with background sync, wall-clock restoration & Pomodoro cycles
+│   │   └── useAnalytics.ts       # Analytics aggregation hook with time-range filtering (7d/30d/all) & pull-to-refresh
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
@@ -165,6 +175,7 @@ StudyMate/
 │   │   ├── timetableService.ts   # Weekly timetable REST client (getWeekly, getDay, create, update, delete)
 │   │   ├── examService.ts        # Exam REST client (getExams, createExam, updateExam, toggleSyllabusTopic, deleteExam)
 │   │   ├── studySessionService.ts # Focus timer REST client (create, getSessions, getStats, deleteSession)
+│   │   ├── analyticsService.ts   # Analytics REST client (getOverview with time-range filters)
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
@@ -175,6 +186,7 @@ StudyMate/
 │   │   ├── timetable.ts          # TimetableEntry, DaySchedule, WeeklyTimetableData, inputs & responses
 │   │   ├── exam.ts               # Exam, SyllabusTopic, ExamPriority, ExamStatus, inputs & responses
 │   │   ├── studySession.ts       # StudySession, SessionType, stats, inputs & responses
+│   │   ├── analytics.ts          # DailyBreakdownItem, SubjectDistributionItem, AnalyticsOverviewData interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -228,6 +240,8 @@ StudyMate/
 | `GET` | `/api/study-sessions/stats` | Get focus session statistics (today minutes, pomodoros, streak) | 🔒 Protected | `{ success: true, message, data: StudySessionStats }` |
 | `GET` | `/api/study-sessions/:id` | Read single study session (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { studySession } }` |
 | `DELETE` | `/api/study-sessions/:id` | Delete study session (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
+| `GET` | `/api/analytics/overview` | Aggregated analytics (7d/30d/90d breakdown, subject distribution, task metrics, productivity score) | 🔒 Protected | `{ success: true, message, data: AnalyticsOverviewData }` |
+| `GET` | `/api/analytics` | Alias for /api/analytics/overview with identical query parameters | 🔒 Protected | `{ success: true, message, data: AnalyticsOverviewData }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -304,5 +318,6 @@ StudyMate/
 | **Day 9** | ✅ Done | Weekly Timetable & Calendar Module: Full Monday–Sunday view, CRUD REST APIs (POST, GET, PUT, DELETE /api/timetable) with user ownership isolation, intelligent overlapping time-slot conflict detection, HH:MM format & minimum duration validation, ScheduleModal with duration presets & subject colors, day strip with today highlight, planned study hours weekly chart, 0 TypeScript errors, 28/28 timetable unit tests passing (96 total assertions) |
 | **Day 10** | ✅ Done | Exam Countdown Tracker Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/exams) with user ownership, days remaining & local countdown calculation, syllabus topic management & progress percentage tracking, priority levels (urgent/high/medium/low), target score tracking, frontend ExamModal with topic checklist & duration presets, urgency alerts (≤3 days), status tabs & subject filtering, 0 TypeScript errors, 40/40 unit tests passing (136 total assertions) |
 | **Day 11** | ✅ Done | Focus Timer & Pomodoro Module: Reliable 25-minute focus sessions, 5-minute short breaks, 15-minute long breaks, start/pause/resume/reset controls, subject selector with popular suggestions, MongoDB session persistence (POST /api/study-sessions) with actual study duration calculation, clientSessionId and time-window duplicate prevention, app backgrounding & wall-clock restoration with AppState sync, streak auto-update, FocusCompleteModal with star ratings & notes, 0 TypeScript errors, 45/45 unit tests passing (181 total assertions) |
-| **Day 12** | 🔜 Up Next | Analytics & Charts Module: Study habit charts, subject time distribution, productivity score, weekly comparisons |
-| **Day 13–18** | 🔜 Scheduled | Profile & Settings → Push & Local Notifications → Polishing & End-to-End Testing → Production Prep |
+| **Day 12** | ✅ Done | Analytics & Insights Module: High-performance MongoDB aggregation APIs (GET /api/analytics/overview), continuous daily study breakdown (7d/30d/all), subject distribution with percentage & star rating breakdown, task completion rate & metrics, monthly goal tracking progress, composite productivity score (0–100), full Analytics screen with time filters, 0 TypeScript errors, 36/36 unit tests passing (217 total assertions) |
+| **Day 13** | 🔜 Up Next | User Profile & Settings Module: Custom avatar, study goals configuration, daily target editing, notification preferences, dark/light theme options, account management & session stats |
+| **Day 14–18** | 🔜 Scheduled | Push & Local Notifications → Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |

@@ -106,9 +106,15 @@ interface WeeklyChartProps {
   breakdown: DailyStudyItem[];
   weeklyGoalHours: number;
   weekHours: number;
+  onViewAnalytics?: () => void;
 }
 
-const WeeklyChart: React.FC<WeeklyChartProps> = ({ breakdown, weeklyGoalHours, weekHours }) => {
+const WeeklyChart: React.FC<WeeklyChartProps> = ({
+  breakdown,
+  weeklyGoalHours,
+  weekHours,
+  onViewAnalytics,
+}) => {
   // Find max hours for scaling bars
   const maxHours = Math.max(...breakdown.map((b) => b.hours), 3);
 
@@ -163,6 +169,17 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({ breakdown, weeklyGoalHours, w
           );
         })}
       </View>
+
+      {onViewAnalytics && (
+        <TouchableOpacity
+          style={styles.viewAnalyticsLink}
+          onPress={onViewAnalytics}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.viewAnalyticsLinkText}>View Full Analytics & Insights</Text>
+          <ArrowRight size={13} color={Colors.primary} />
+        </TouchableOpacity>
+      )}
     </Card>
   );
 };
@@ -309,6 +326,7 @@ export default function HomeScreen() {
                 breakdown={summary.studyTime.weeklyBreakdown}
                 weeklyGoalHours={summary.studyTime.weeklyGoalHours}
                 weekHours={summary.studyTime.weekHours}
+                onViewAnalytics={() => router.push('/analytics' as any)}
               />
             )}
 
@@ -813,6 +831,21 @@ const styles = StyleSheet.create({
   barDayLabelToday: {
     color: Colors.primary,
     fontWeight: FontWeight.bold,
+  },
+  viewAnalyticsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border + '60',
+  },
+  viewAnalyticsLinkText: {
+    color: Colors.primary,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
   },
 
   // Quick Actions

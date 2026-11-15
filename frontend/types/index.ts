@@ -6,4 +6,5 @@ export * from './task';
 export * from './timetable';
 export * from './exam';
 export * from './studySession';
+export * from './analytics';
 

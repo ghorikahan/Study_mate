@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   User as UserIcon,
   Settings,
@@ -21,6 +22,7 @@ import {
   TrendingUp,
   Star,
   Moon,
+  BarChart3,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge } from '../../components/ui';
@@ -70,6 +72,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, value, onPress, 
 // ─── Main Screen ───────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -179,6 +182,17 @@ export default function ProfileScreen() {
             icon={<Shield size={18} color={Colors.success} />}
             label="Privacy & Security"
             onPress={() => {}}
+          />
+        </Card>
+
+        {/* ── App Settings ── */}
+        <Text style={styles.sectionLabel}>Performance & Insights</Text>
+        <Card style={styles.settingsCard}>
+          <SettingsRow
+            icon={<BarChart3 size={18} color={Colors.primary} />}
+            label="Analytics & Insights"
+            value="View stats"
+            onPress={() => router.push('/analytics' as any)}
           />
         </Card>
 
