@@ -277,7 +277,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       style={[
                         styles.suggestionPill,
                         subject.toLowerCase() === s.toLowerCase() &&
-                          styles.suggestionPillActive,
+                        styles.suggestionPillActive,
                       ]}
                       onPress={() => {
                         setSubject(s);
@@ -291,7 +291,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                         style={[
                           styles.suggestionText,
                           subject.toLowerCase() === s.toLowerCase() &&
-                            styles.suggestionTextActive,
+                          styles.suggestionTextActive,
                         ]}
                       >
                         {s}
