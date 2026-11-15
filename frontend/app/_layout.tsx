@@ -57,6 +57,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="timetable" options={{ headerShown: false, animation: 'slide_from_right' }} />
     </Stack>
   );
 }

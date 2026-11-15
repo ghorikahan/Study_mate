@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   BookOpen,
   Plus,
@@ -25,6 +26,7 @@ import {
   AlertCircle,
   Filter,
   Sparkles,
+  LayoutGrid,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState, Button } from '../../components/ui';
@@ -64,6 +66,7 @@ const formatDateLabel = (dateString: string): string => {
 };
 
 export default function PlannerScreen() {
+  const router = useRouter();
   const {
     plans,
     subjects,
@@ -195,13 +198,22 @@ export default function PlannerScreen() {
             {plans.length} {plans.length === 1 ? 'session' : 'sessions'} scheduled
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={handleOpenCreate}
-          activeOpacity={0.8}
-        >
-          <Plus size={22} color={Colors.white} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: Colors.cardSecondary, borderWidth: 1, borderColor: Colors.border }]}
+            onPress={() => router.push('/timetable' as any)}
+            activeOpacity={0.8}
+          >
+            <LayoutGrid size={20} color={Colors.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={handleOpenCreate}
+            activeOpacity={0.8}
+          >
+            <Plus size={22} color={Colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView

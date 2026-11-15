@@ -4,6 +4,7 @@ const Task = require('./Task');
 const Exam = require('./Exam');
 const StudySession = require('./StudySession');
 const Notification = require('./Notification');
+const Timetable = require('./Timetable');
 
 module.exports = {
   User,
@@ -12,4 +13,5 @@ module.exports = {
   Exam,
   StudySession,
   Notification,
+  Timetable,
 };

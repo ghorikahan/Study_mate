@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Circle,
   Award,
+  LayoutGrid,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState, Button } from '../../components/ui';
@@ -328,16 +329,16 @@ export default function HomeScreen() {
                 onPress={() => router.push('/(tabs)/planner' as any)}
               />
               <QuickAction
+                icon={<LayoutGrid size={20} color={Colors.success} />}
+                label="Timetable"
+                color={Colors.success}
+                onPress={() => router.push('/timetable' as any)}
+              />
+              <QuickAction
                 icon={<Calendar size={20} color={Colors.warning} />}
                 label="Exams"
                 color={Colors.warning}
                 onPress={() => router.push('/(tabs)/exams' as any)}
-              />
-              <QuickAction
-                icon={<TrendingUp size={20} color={Colors.success} />}
-                label="Profile"
-                color={Colors.success}
-                onPress={() => router.push('/(tabs)/profile' as any)}
               />
             </View>
 
