@@ -27,6 +27,7 @@ import {
   Circle,
   Award,
   LayoutGrid,
+  Timer,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState, Button } from '../../components/ui';
@@ -310,6 +311,26 @@ export default function HomeScreen() {
                 weekHours={summary.studyTime.weekHours}
               />
             )}
+
+            {/* ── Focus Timer Hero Banner ── */}
+            <TouchableOpacity
+              style={styles.focusBanner}
+              onPress={() => router.push('/focus' as any)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.focusBannerLeft}>
+                <View style={styles.focusIconBg}>
+                  <Timer size={22} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.focusBannerTitle}>Focus Timer (Pomodoro)</Text>
+                  <Text style={styles.focusBannerSub}>Start 25m focus session with break cycles</Text>
+                </View>
+              </View>
+              <View style={styles.focusBannerBtn}>
+                <Text style={styles.focusBannerBtnText}>Start ▶</Text>
+              </View>
+            </TouchableOpacity>
 
             {/* ── Quick Actions Grid ── */}
             <View style={styles.sectionHeader}>
@@ -636,6 +657,55 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: FontSize.xs,
     marginTop: 2,
+  },
+
+  // Focus Timer Hero Banner
+  focusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.card,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}40`,
+    padding: Spacing.base,
+    marginBottom: Spacing.base,
+  },
+  focusBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  focusIconBg: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.md,
+    backgroundColor: `${Colors.primary}20`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  focusBannerTitle: {
+    color: Colors.text,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  focusBannerSub: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
+  focusBannerBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  focusBannerBtnText: {
+    color: '#fff',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
   },
 
   // Stats Row

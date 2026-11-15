@@ -5,4 +5,5 @@ export * from './studyPlan';
 export * from './task';
 export * from './timetable';
 export * from './exam';
+export * from './studySession';
 

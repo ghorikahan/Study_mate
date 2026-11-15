@@ -34,10 +34,16 @@ const studySessionSchema = new mongoose.Schema(
     sessionType: {
       type: String,
       enum: {
-        values: ['pomodoro', 'stopwatch', 'countdown', 'manual'],
-        message: 'Session type must be pomodoro, stopwatch, countdown, or manual',
+        values: ['pomodoro', 'shortBreak', 'longBreak', 'stopwatch', 'countdown', 'manual'],
+        message: 'Session type must be pomodoro, shortBreak, longBreak, stopwatch, countdown, or manual',
       },
       default: 'pomodoro',
+    },
+    clientSessionId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
     },
     durationMinutes: {
       type: Number,
@@ -89,6 +95,7 @@ studySessionSchema.index({ user: 1, startTime: -1 });
 studySessionSchema.index({ user: 1, subject: 1 });
 studySessionSchema.index({ user: 1, sessionType: 1 });
 studySessionSchema.index({ user: 1, isCompleted: 1 });
+studySessionSchema.index({ user: 1, clientSessionId: 1 });
 
 const StudySession = mongoose.models.StudySession || mongoose.model('StudySession', studySessionSchema);
 

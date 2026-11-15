@@ -5,6 +5,7 @@ const studyPlanController = require('./studyPlanController');
 const taskController = require('./taskController');
 const timetableController = require('./timetableController');
 const examController = require('./examController');
+const studySessionController = require('./studySessionController');
 
 module.exports = {
   healthController,
@@ -14,4 +15,5 @@ module.exports = {
   taskController,
   timetableController,
   examController,
+  studySessionController,
 };

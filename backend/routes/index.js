@@ -8,6 +8,7 @@ const studyPlanRoutes = require('./studyPlanRoutes');
 const taskRoutes = require('./taskRoutes');
 const timetableRoutes = require('./timetableRoutes');
 const examRoutes = require('./examRoutes');
+const studySessionRoutes = require('./studySessionRoutes');
 
 // Mount routes
 router.use('/', healthRoutes);
@@ -17,6 +18,7 @@ router.use('/study-plans', studyPlanRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/timetable', timetableRoutes);
 router.use('/exams', examRoutes);
+router.use('/study-sessions', studySessionRoutes);
 
 module.exports = router;
 

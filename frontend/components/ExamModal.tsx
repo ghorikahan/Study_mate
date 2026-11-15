@@ -164,7 +164,7 @@ const ExamModal: React.FC<ExamModalProps> = ({ visible, onClose, onSubmit, editE
       const msg =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
-            'Failed to save exam'
+          'Failed to save exam'
           : 'Failed to save exam';
       setFormError(msg);
     } finally {
