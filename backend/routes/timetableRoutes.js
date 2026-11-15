@@ -23,3 +23,4 @@ router.get('/day', getDayEntries);
 router.route('/:id').get(getEntryById).put(updateEntry).delete(deleteEntry);
 
 module.exports = router;
+

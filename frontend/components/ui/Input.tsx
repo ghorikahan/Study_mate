@@ -41,15 +41,15 @@ export const Input: React.FC<InputProps> = ({
   const borderColor = error
     ? Colors.error
     : focused
-    ? Colors.borderFocus
-    : Colors.border;
+      ? Colors.borderFocus
+      : Colors.border;
 
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
         <View style={styles.labelRow}>
           <Text style={styles.label}>{label}</Text>
-          {required && <Text style={styles.required}> *</Text>}
+          {required && <Text style={styles.required}>*</Text>}
         </View>
       )}
 

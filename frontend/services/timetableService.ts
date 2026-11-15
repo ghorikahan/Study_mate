@@ -46,3 +46,4 @@ export const updateTimetableEntry = async (
 export const deleteTimetableEntry = async (id: string): Promise<void> => {
   await api.delete(`/timetable/${id}`);
 };
+

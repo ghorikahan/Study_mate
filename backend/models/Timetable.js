@@ -138,3 +138,4 @@ timetableSchema.index({ user: 1, subject: 1 });
 const Timetable = mongoose.models.Timetable || mongoose.model('Timetable', timetableSchema);
 
 module.exports = Timetable;
+

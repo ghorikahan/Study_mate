@@ -98,3 +98,4 @@ export interface TimetableEntryResponse {
   message: string;
   data: { entry: TimetableEntry };
 }
+

@@ -255,7 +255,7 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
                       style={[
                         styles.suggestionPill,
                         subject.toLowerCase() === s.toLowerCase() &&
-                          styles.suggestionPillActive,
+                        styles.suggestionPillActive,
                       ]}
                       onPress={() => {
                         setSubject(s);
@@ -269,7 +269,7 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
                         style={[
                           styles.suggestionText,
                           subject.toLowerCase() === s.toLowerCase() &&
-                            styles.suggestionTextActive,
+                          styles.suggestionTextActive,
                         ]}
                       >
                         {s}
