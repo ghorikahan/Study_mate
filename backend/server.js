@@ -13,6 +13,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Trust reverse proxy headers (Render, Heroku, AWS ELB, NGINX)
+app.set('trust proxy', 1);
+
 // -------------------------------------------------------------
 // 1. Secure CORS Configuration
 // -------------------------------------------------------------

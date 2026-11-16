@@ -11,9 +11,13 @@ import { getToken } from './storage';
 export const API_BASE_URL: string =
   process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5000';
 
+const API_TIMEOUT = process.env.EXPO_PUBLIC_API_TIMEOUT
+  ? parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT, 10)
+  : 25000; // 25s default to accommodate cloud PaaS free-tier cold starts (e.g. Render)
+
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

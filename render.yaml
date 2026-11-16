@@ -1,0 +1,28 @@
+# =================================================================
+# StudyMate - Render Blueprint Specification (Infrastructure as Code)
+# Docs: https://render.com/docs/blueprint-spec
+# =================================================================
+services:
+  - type: web
+    name: studymate-api
+    runtime: node
+    plan: free
+    region: oregon # or ohio, frankfurt, singapore
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_SECRET
+        generateValue: true # Render will generate a cryptographically secure 256-bit random string
+      - key: MONGODB_URI
+        sync: false # Prompts user to securely input MongoDB Atlas connection string during setup

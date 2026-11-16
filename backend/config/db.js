@@ -30,11 +30,11 @@ const setupMongooseListeners = () => {
 const connectDB = async () => {
   setupMongooseListeners();
 
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 
   if (!uri || uri.includes('<username>') || uri.includes('<password>')) {
     console.warn(
-      '⚠️ [Database] MONGODB_URI is not configured in .env. Running without active MongoDB Atlas connection.\n' +
+      '⚠️ [Database] MONGODB_URI/MONGO_URI is not configured in .env. Running without active MongoDB Atlas connection.\n' +
       '   Configure MONGODB_URI in backend/.env when ready to connect.'
     );
     return false;
