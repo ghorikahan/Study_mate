@@ -10,6 +10,7 @@ const timetableRoutes = require('./timetableRoutes');
 const examRoutes = require('./examRoutes');
 const studySessionRoutes = require('./studySessionRoutes');
 const analyticsRoutes = require('./analyticsRoutes');
+const userRoutes = require('./userRoutes');
 
 // Mount routes
 router.use('/', healthRoutes);
@@ -21,6 +22,7 @@ router.use('/timetable', timetableRoutes);
 router.use('/exams', examRoutes);
 router.use('/study-sessions', studySessionRoutes);
 router.use('/analytics', analyticsRoutes);
+router.use('/users', userRoutes);
 
 module.exports = router;
 

@@ -7,4 +7,5 @@ export * from './timetable';
 export * from './exam';
 export * from './studySession';
 export * from './analytics';
+export * from './user';
 

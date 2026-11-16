@@ -1,6 +1,18 @@
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  examReminders: boolean;
+  dailyPlanSummary: boolean;
+  taskReminders?: boolean;
+  soundEnabled?: boolean;
+}
+
 export interface UserPreferences {
   theme: 'dark' | 'light' | 'system';
   weeklyStudyGoalHours: number;
+  dailyStudyGoalMinutes?: number;
+  defaultFocusMinutes?: number;
+  notifications?: NotificationPreferences;
   notificationsEnabled?: boolean;
 }
 
@@ -11,7 +23,13 @@ export interface User {
   email: string;
   role: 'student' | 'admin';
   avatar?: string | null;
-  studyStreak?: number;
+  institution?: string;
+  bio?: string;
+  studyStreak?: {
+    currentStreak: number;
+    longestStreak: number;
+    lastStudyDate?: string | null;
+  } | number;
   preferences?: UserPreferences;
   isVerified?: boolean;
   createdAt?: string;
@@ -63,4 +81,5 @@ export interface AuthContextType extends AuthState {
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (updatedUser: User) => void;
 }

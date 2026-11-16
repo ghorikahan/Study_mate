@@ -190,7 +190,11 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { summary, loading, refreshing, error, refresh, refetch } = useDashboard();
 
-  const streak = summary?.user.studyStreak ?? user?.studyStreak ?? 0;
+  const rawStreak = summary?.user.studyStreak ?? user?.studyStreak ?? 0;
+  const streak: number =
+    typeof rawStreak === 'number'
+      ? rawStreak
+      : (rawStreak as any)?.currentStreak ?? 0;
   const userName = summary?.user.name || user?.name || 'Student';
 
   return (

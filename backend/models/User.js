@@ -31,6 +31,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    institution: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [100, 'Institution name cannot exceed 100 characters'],
+    },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [250, 'Bio cannot exceed 250 characters'],
+    },
     role: {
       type: String,
       enum: ['student', 'admin'],
@@ -51,14 +63,22 @@ const userSchema = new mongoose.Schema(
       dailyStudyGoalMinutes: {
         type: Number,
         default: 120,
-        min: 15,
-        max: 720,
+        min: [15, 'Daily goal must be at least 15 minutes'],
+        max: [720, 'Daily goal cannot exceed 720 minutes (12 hours)'],
+      },
+      defaultFocusMinutes: {
+        type: Number,
+        default: 25,
+        min: [5, 'Focus session must be at least 5 minutes'],
+        max: [120, 'Focus session cannot exceed 120 minutes'],
       },
       notifications: {
         email: { type: Boolean, default: true },
         push: { type: Boolean, default: true },
         examReminders: { type: Boolean, default: true },
         dailyPlanSummary: { type: Boolean, default: true },
+        taskReminders: { type: Boolean, default: true },
+        soundEnabled: { type: Boolean, default: true },
       },
     },
     studyStreak: {

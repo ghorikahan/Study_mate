@@ -59,6 +59,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // ─── Update Cached User Directly ───────────────────────────────────────────
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+    storage.saveUser(updatedUser).catch((err) => {
+      console.warn('[AuthContext] Failed to persist updated user:', err);
+    });
+  }, []);
+
   // ─── Login handler ─────────────────────────────────────────────────────────
   const login = useCallback(
     async (credentials: LoginCredentials) => {
@@ -175,8 +183,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       register,
       logout,
       refreshUser,
+      updateUser,
     }),
-    [user, token, isLoading, isAuthenticated, login, register, logout, refreshUser]
+    [user, token, isLoading, isAuthenticated, login, register, logout, refreshUser, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

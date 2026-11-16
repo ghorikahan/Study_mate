@@ -15,7 +15,8 @@
     "test:exams": "node test_exams.js",
     "test:timer": "node test_focus_timer.js",
     "test:analytics": "node test_analytics.js",
-    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js && node test_tasks.js && node test_timetable.js && node test_exams.js && node test_focus_timer.js && node test_analytics.js"
+    "test:profile": "node test_profile_settings.js",
+    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js && node test_tasks.js && node test_timetable.js && node test_exams.js && node test_focus_timer.js && node test_analytics.js && node test_profile_settings.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

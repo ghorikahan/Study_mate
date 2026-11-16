@@ -63,6 +63,7 @@ StudyMate/
 │   │   ├── examController.js     # Full CRUD exam handlers (create, read, update, delete, topic toggle, countdowns)
 │   │   ├── studySessionController.js # Focus timer session handlers (Pomodoro logging, stats, streak update, deduplication)
 │   │   ├── analyticsController.js # Day 12 Analytics module aggregation (daily breakdown, subject distribution, productivity score)
+│   │   ├── userController.js     # Day 13 Profile, password change, study goals, notifications & cascade account deletion
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -81,7 +82,7 @@ StudyMate/
 │   │   └── index.js              # Models barrel export
 │   ├── routes/
 │   │   ├── healthRoutes.js       # /api/health & /api/database-status routes
-│   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout
+│   │   ├── authRoutes.js         # /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout, password/delete aliases
 │   │   ├── dashboardRoutes.js    # /api/dashboard/summary route
 │   │   ├── studyPlanRoutes.js    # Full CRUD study plan routes (GET, POST, PUT, PATCH, DELETE)
 │   │   ├── taskRoutes.js         # Full CRUD task routes with toggle status (GET, POST, PUT, PATCH, DELETE)
@@ -89,6 +90,7 @@ StudyMate/
 │   │   ├── examRoutes.js         # Exam Tracker routes (GET, POST, PUT, DELETE, PATCH topics)
 │   │   ├── studySessionRoutes.js # Focus timer & study session routes (GET, POST, /stats, DELETE)
 │   │   ├── analyticsRoutes.js    # Analytics overview routes (GET /api/analytics/overview with 7d/30d/all filters)
+│   │   ├── userRoutes.js        # User profile, password, preferences, cascade account deletion routes
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -108,6 +110,7 @@ StudyMate/
 │   ├── test_exams.js             # Day 10 exam tracker test suite (40/40 passing)
 │   ├── test_focus_timer.js       # Day 11 focus timer & pomodoro test suite (45/45 passing)
 │   ├── test_analytics.js         # Day 12 analytics aggregation test suite (36/36 passing)
+│   ├── test_profile_settings.js  # Day 13 profile & settings test suite (40/40 passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -143,6 +146,13 @@ StudyMate/
 │   │   │   ├── SubjectDistributionCard.tsx # Subject time distribution stacked bar & detailed breakdown
 │   │   │   ├── TaskCompletionCard.tsx # Overall task metrics & completion progress bar
 │   │   │   └── MonthlyProgressCard.tsx # Monthly study hours target card with remaining milestone
+│   │   ├── profile/              # 👤 Day 13 Profile & Settings component module
+│   │   │   ├── EditProfileModal.tsx # Edit name, bio, institution, and 8 curated avatar presets
+│   │   │   ├── ChangePasswordModal.tsx # Secure password change with strength bar & confirmation
+│   │   │   ├── StudyGoalsModal.tsx # Weekly/daily study hours target chips & focus session duration
+│   │   │   ├── NotificationPreferencesModal.tsx # Push, exam, task, daily plan & sound alert switches
+│   │   │   ├── DeleteAccountModal.tsx # Irreversible danger zone modal with explicit "DELETE" confirmation
+│   │   │   └── index.ts          # Profile components barrel export
 │   │   ├── ConnectionIndicator.tsx # Live API connection pill & ping latency
 │   │   ├── DashboardHeader.tsx   # StudyMate branding & tagline
 │   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
@@ -176,6 +186,7 @@ StudyMate/
 │   │   ├── examService.ts        # Exam REST client (getExams, createExam, updateExam, toggleSyllabusTopic, deleteExam)
 │   │   ├── studySessionService.ts # Focus timer REST client (create, getSessions, getStats, deleteSession)
 │   │   ├── analyticsService.ts   # Analytics REST client (getOverview with time-range filters)
+│   │   ├── userService.ts        # User profile, password, preferences & account deletion REST client
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
@@ -187,6 +198,7 @@ StudyMate/
 │   │   ├── exam.ts               # Exam, SyllabusTopic, ExamPriority, ExamStatus, inputs & responses
 │   │   ├── studySession.ts       # StudySession, SessionType, stats, inputs & responses
 │   │   ├── analytics.ts          # DailyBreakdownItem, SubjectDistributionItem, AnalyticsOverviewData interfaces
+│   │   ├── user.ts               # UserStats, profile input, password input, preferences, cascade delete interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -242,6 +254,11 @@ StudyMate/
 | `DELETE` | `/api/study-sessions/:id` | Delete study session (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
 | `GET` | `/api/analytics/overview` | Aggregated analytics (7d/30d/90d breakdown, subject distribution, task metrics, productivity score) | 🔒 Protected | `{ success: true, message, data: AnalyticsOverviewData }` |
 | `GET` | `/api/analytics` | Alias for /api/analytics/overview with identical query parameters | 🔒 Protected | `{ success: true, message, data: AnalyticsOverviewData }` |
+| `GET` | `/api/users/profile` | Get user profile details and aggregated live study statistics | 🔒 Protected | `{ success: true, message, data: { user, stats } }` |
+| `PUT` | `/api/users/profile` | Update name, bio, institution, and avatar preset / custom URL | 🔒 Protected | `{ success: true, message, data: { user } }` |
+| `PUT` | `/api/users/password` | Securely change password (requires currentPassword, validates min 6 chars) | 🔒 Protected | `{ success: true, message, data: { user } }` |
+| `PUT` | `/api/users/preferences` | Update weekly/daily study targets, default focus minutes & notification toggles | 🔒 Protected | `{ success: true, message, data: { user } }` |
+| `DELETE` | `/api/users/account` | Irreversible account deletion with cascade cleanup of all student data | 🔒 Protected | `{ success: true, message, data: { cascadeSummary } }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -319,5 +336,6 @@ StudyMate/
 | **Day 10** | ✅ Done | Exam Countdown Tracker Module: Full CRUD REST APIs (POST, GET, PUT, PATCH, DELETE /api/exams) with user ownership, days remaining & local countdown calculation, syllabus topic management & progress percentage tracking, priority levels (urgent/high/medium/low), target score tracking, frontend ExamModal with topic checklist & duration presets, urgency alerts (≤3 days), status tabs & subject filtering, 0 TypeScript errors, 40/40 unit tests passing (136 total assertions) |
 | **Day 11** | ✅ Done | Focus Timer & Pomodoro Module: Reliable 25-minute focus sessions, 5-minute short breaks, 15-minute long breaks, start/pause/resume/reset controls, subject selector with popular suggestions, MongoDB session persistence (POST /api/study-sessions) with actual study duration calculation, clientSessionId and time-window duplicate prevention, app backgrounding & wall-clock restoration with AppState sync, streak auto-update, FocusCompleteModal with star ratings & notes, 0 TypeScript errors, 45/45 unit tests passing (181 total assertions) |
 | **Day 12** | ✅ Done | Analytics & Insights Module: High-performance MongoDB aggregation APIs (GET /api/analytics/overview), continuous daily study breakdown (7d/30d/all), subject distribution with percentage & star rating breakdown, task completion rate & metrics, monthly goal tracking progress, composite productivity score (0–100), full Analytics screen with time filters, 0 TypeScript errors, 36/36 unit tests passing (217 total assertions) |
-| **Day 13** | 🔜 Up Next | User Profile & Settings Module: Custom avatar, study goals configuration, daily target editing, notification preferences, dark/light theme options, account management & session stats |
-| **Day 14–18** | 🔜 Scheduled | Push & Local Notifications → Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |
+| **Day 13** | ✅ Done | User Profile & Settings Module: Display & edit user profile (name, bio, institution, 8 curated avatar presets + custom URL), secure password change with strength scoring, study goal configurations (weekly/daily targets & focus session defaults), notification & audio alert preferences, sign-out workflow, and irreversible account deletion workflow with cascade cleanup (plans, tasks, exams, focus logs, timetable, notifications), 0 TypeScript errors, 40/40 unit tests passing (257 total assertions) |
+| **Day 14** | 🔜 Up Next | Push & Local Notifications Module: Scheduled daily study reminders, urgent exam alerts, task deadline warnings, streak retention notifications |
+| **Day 15–18** | 🔜 Scheduled | Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |

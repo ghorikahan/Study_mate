@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -13,7 +16,7 @@ import {
   User as UserIcon,
   Settings,
   Bell,
-  Shield,
+  Lock,
   LogOut,
   ChevronRight,
   BookOpen,
@@ -23,11 +26,25 @@ import {
   Star,
   Moon,
   BarChart3,
+  Target,
+  Trash2,
+  Edit3,
+  GraduationCap,
+  Sparkles,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge } from '../../components/ui';
 import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/userService';
+import { UserStats } from '../../types/user';
+import {
+  EditProfileModal,
+  ChangePasswordModal,
+  StudyGoalsModal,
+  NotificationPreferencesModal,
+  DeleteAccountModal,
+} from '../../components/profile';
 
 // ─── Stat Card ─────────────────────────────────────────────────────────
 interface ProfileStatProps {
@@ -52,7 +69,13 @@ interface SettingsRowProps {
   onPress: () => void;
   destructive?: boolean;
 }
-const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, value, onPress, destructive }) => (
+const SettingsRow: React.FC<SettingsRowProps> = ({
+  icon,
+  label,
+  value,
+  onPress,
+  destructive,
+}) => (
   <TouchableOpacity style={styles.settingsRow} onPress={onPress} activeOpacity={0.8}>
     <View style={styles.settingsLeft}>
       <View style={[styles.settingsIcon, destructive && styles.settingsIconDanger]}>
@@ -71,8 +94,110 @@ const SettingsRow: React.FC<SettingsRowProps> = ({ icon, label, value, onPress, 
 
 // ─── Main Screen ───────────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const router = useRouter();
+
+  // Modals Visibility
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showStudyGoals, setShowStudyGoals] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+
+  // Profile & Study Stats State
+  const [stats, setStats] = useState<UserStats>({
+    plansCount: 0,
+    tasksCount: 0,
+    completedTasksCount: 0,
+    examsCount: 0,
+    sessionsCount: 0,
+    totalStudyHours: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch fresh profile and stats from backend
+  const loadProfileStats = useCallback(async () => {
+    try {
+      const data = await userService.getProfile();
+      if (data?.user) {
+        updateUser(data.user);
+      }
+      if (data?.stats) {
+        setStats(data.stats);
+      }
+    } catch (err) {
+      console.warn('[ProfileScreen] Failed to load profile stats:', err);
+    }
+  }, [updateUser]);
+
+  useEffect(() => {
+    loadProfileStats();
+  }, [loadProfileStats]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadProfileStats();
+    setRefreshing(false);
+  };
+
+  // ─── Handlers ──────────────────────────────────────────────────────────
+  const handleSaveProfile = async (data: {
+    name: string;
+    institution: string;
+    bio: string;
+    avatar: string | null;
+  }) => {
+    const updated = await userService.updateProfile(data);
+    updateUser(updated);
+    Alert.alert('Profile Updated', 'Your profile details have been saved successfully.');
+  };
+
+  const handleSavePassword = async (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword?: string;
+  }) => {
+    const msg = await userService.changePassword(data);
+    Alert.alert('Password Changed', msg || 'Your password has been changed securely.');
+  };
+
+  const handleSaveGoals = async (data: {
+    weeklyStudyGoalHours: number;
+    dailyStudyGoalMinutes: number;
+    defaultFocusMinutes: number;
+  }) => {
+    const updated = await userService.updatePreferences(data);
+    updateUser(updated);
+    Alert.alert('Study Goals Saved', `Weekly study target updated to ${data.weeklyStudyGoalHours} hours.`);
+  };
+
+  const handleSaveNotifications = async (notifications: any) => {
+    const updated = await userService.updatePreferences({ notifications });
+    updateUser(updated);
+    Alert.alert('Preferences Saved', 'Your notification and alert preferences have been updated.');
+  };
+
+  const handleDeleteAccount = async (data: {
+    password: string;
+    confirmationText: string;
+  }) => {
+    await userService.deleteAccount(data);
+    Alert.alert(
+      'Account Deleted',
+      'Your StudyMate account and all study data have been permanently removed.',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            await logout();
+          },
+        },
+      ]
+    );
+  };
 
   const handleSignOut = () => {
     Alert.alert(
@@ -95,18 +220,29 @@ export default function ProfileScreen() {
     );
   };
 
-  const displayName = user?.name || 'Student';
+  const displayName = user?.name || 'Student Scholar';
   const displayEmail = user?.email || 'student@studymate.app';
-  const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Student Scholar';
-  const streakCount = user?.studyStreak ?? 0;
+  const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Verified Scholar';
+  const streakCount =
+    typeof user?.studyStreak === 'number'
+      ? user.studyStreak
+      : user?.studyStreak?.currentStreak ?? stats.currentStreak ?? 0;
+  const weeklyGoal = user?.preferences?.weeklyStudyGoalHours || 20;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Text style={styles.screenTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsBtn} activeOpacity={0.8}>
-          <Settings size={20} color={Colors.textSecondary} />
+        <View>
+          <Text style={styles.screenTitle}>Profile & Settings</Text>
+          <Text style={styles.screenSubtitle}>Manage your account, targets & privacy</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          activeOpacity={0.8}
+          onPress={() => setShowEditProfile(true)}
+        >
+          <Edit3 size={18} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -114,46 +250,96 @@ export default function ProfileScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
       >
-        {/* ── Avatar & Name ── */}
-        <View style={styles.avatarSection}>
-          <View style={styles.avatarWrapper}>
-            <UserIcon size={40} color={Colors.primary} />
-            <View style={styles.avatarBadge}>
-              <Star size={10} color={Colors.background} />
+        {/* ── Profile Identity Card ── */}
+        <Card style={styles.identityCard}>
+          <View style={styles.identityRow}>
+            {/* Avatar with preset/custom image or initial fallback */}
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              activeOpacity={0.8}
+              onPress={() => setShowEditProfile(true)}
+            >
+              {user?.avatar ? (
+                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarFallbackText}>
+                    {displayName.slice(0, 2).toUpperCase()}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.avatarBadge}>
+                <Sparkles size={11} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+
+            {/* User Meta */}
+            <View style={styles.identityMeta}>
+              <View style={styles.nameRow}>
+                <Text style={styles.userName} numberOfLines={1}>
+                  {displayName}
+                </Text>
+              </View>
+              <Text style={styles.userEmail} numberOfLines={1}>
+                {displayEmail}
+              </Text>
+              {user?.institution ? (
+                <View style={styles.institutionRow}>
+                  <GraduationCap size={13} color={Colors.textSecondary} style={{ marginRight: 4 }} />
+                  <Text style={styles.institutionText} numberOfLines={1}>
+                    {user.institution}
+                  </Text>
+                </View>
+              ) : null}
+              <View style={styles.badgeRow}>
+                <Badge label={roleLabel} variant="primary" dot />
+              </View>
             </View>
           </View>
-          <Text style={styles.userName}>{displayName}</Text>
-          <Text style={styles.userEmail}>{displayEmail}</Text>
-          <Badge label={roleLabel} variant="primary" dot />
-        </View>
 
-        {/* ── Stats Row ── */}
+          {/* Bio Callout if present */}
+          {user?.bio ? (
+            <View style={styles.bioBox}>
+              <Text style={styles.bioText}>"{user.bio}"</Text>
+            </View>
+          ) : null}
+        </Card>
+
+        {/* ── Live Study Stats ── */}
         <Card style={styles.statsCard}>
           <View style={styles.statsRow}>
             <ProfileStat
-              value="0"
+              value={`${stats.plansCount}`}
               label="Plans"
               icon={<BookOpen size={18} color={Colors.secondary} />}
               color={Colors.secondary}
             />
             <View style={styles.statDivider} />
             <ProfileStat
-              value="0"
+              value={`${stats.completedTasksCount}`}
               label="Tasks"
               icon={<CheckSquare size={18} color={Colors.success} />}
               color={Colors.success}
             />
             <View style={styles.statDivider} />
             <ProfileStat
-              value="0h"
+              value={`${stats.totalStudyHours}h`}
               label="Studied"
               icon={<Clock size={18} color={Colors.warning} />}
               color={Colors.warning}
             />
             <View style={styles.statDivider} />
             <ProfileStat
-              value={`${streakCount}`}
+              value={`${streakCount}d`}
               label="Streak"
               icon={<TrendingUp size={18} color={Colors.primary} />}
               color={Colors.primary}
@@ -161,81 +347,119 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        {/* ── Account Settings ── */}
-        <Text style={styles.sectionLabel}>Account</Text>
+        {/* ── Study Goals & Performance ── */}
+        <Text style={styles.sectionLabel}>ACADEMIC TARGETS & INSIGHTS</Text>
         <Card style={styles.settingsCard}>
           <SettingsRow
-            icon={<UserIcon size={18} color={Colors.primary} />}
-            label="Edit Profile"
-            value="Coming Day 10"
-            onPress={() => {}}
+            icon={<Target size={18} color={Colors.warning} />}
+            label="Study Goals"
+            value={`${weeklyGoal}h / week`}
+            onPress={() => setShowStudyGoals(true)}
           />
           <View style={styles.separator} />
-          <SettingsRow
-            icon={<Bell size={18} color={Colors.secondary} />}
-            label="Notifications"
-            value="Off"
-            onPress={() => {}}
-          />
-          <View style={styles.separator} />
-          <SettingsRow
-            icon={<Shield size={18} color={Colors.success} />}
-            label="Privacy & Security"
-            onPress={() => {}}
-          />
-        </Card>
-
-        {/* ── App Settings ── */}
-        <Text style={styles.sectionLabel}>Performance & Insights</Text>
-        <Card style={styles.settingsCard}>
           <SettingsRow
             icon={<BarChart3 size={18} color={Colors.primary} />}
             label="Analytics & Insights"
-            value="View stats"
+            value="View full charts"
             onPress={() => router.push('/analytics' as any)}
           />
         </Card>
 
-        {/* ── App Settings ── */}
-        <Text style={styles.sectionLabel}>Preferences</Text>
+        {/* ── Account & Preferences ── */}
+        <Text style={styles.sectionLabel}>ACCOUNT & PREFERENCES</Text>
         <Card style={styles.settingsCard}>
           <SettingsRow
+            icon={<UserIcon size={18} color={Colors.primary} />}
+            label="Edit Profile Details"
+            value="Name, bio, avatar"
+            onPress={() => setShowEditProfile(true)}
+          />
+          <View style={styles.separator} />
+          <SettingsRow
+            icon={<Bell size={18} color={Colors.secondary} />}
+            label="Notification Preferences"
+            value={user?.preferences?.notifications?.push !== false ? 'Enabled' : 'Muted'}
+            onPress={() => setShowNotifications(true)}
+          />
+          <View style={styles.separator} />
+          <SettingsRow
             icon={<Moon size={18} color={Colors.info} />}
-            label="Dark Mode"
-            value="Always On"
+            label="App Theme"
+            value="Dark Mode"
             onPress={() => {}}
           />
           <View style={styles.separator} />
           <SettingsRow
-            icon={<TrendingUp size={18} color={Colors.warning} />}
-            label="Weekly Goal"
-            value="Not set"
-            onPress={() => {}}
+            icon={<Lock size={18} color={Colors.success} />}
+            label="Change Password"
+            value="Security"
+            onPress={() => setShowChangePassword(true)}
           />
         </Card>
 
-        {/* ── Logout ── */}
-        <Text style={styles.sectionLabel}>Account Actions</Text>
+        {/* ── Account Actions ── */}
+        <Text style={styles.sectionLabel}>ACCOUNT ACTIONS</Text>
         <Card style={styles.settingsCard}>
           <SettingsRow
-            icon={<LogOut size={18} color={Colors.error} />}
+            icon={<LogOut size={18} color={Colors.textSecondary} />}
             label="Sign Out"
             onPress={handleSignOut}
+          />
+          <View style={styles.separator} />
+          <SettingsRow
+            icon={<Trash2 size={18} color={Colors.error} />}
+            label="Delete Account & Data"
+            value="Danger zone"
+            onPress={() => setShowDeleteAccount(true)}
             destructive
           />
         </Card>
 
-        {/* ── App info ── */}
+        {/* ── App Info ── */}
         <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>StudyMate v1.0.0</Text>
+          <Text style={styles.appInfoText}>StudyMate • Smart Study Planner v1.0.0</Text>
           <Text style={styles.appInfoSub}>
             Plan Smart. Study Better. Achieve More.
           </Text>
-          <Text style={styles.appInfoSub}>Day 5 — Auth Integration Active</Text>
+          <Text style={styles.appInfoSub}>Day 13 — Profile & Settings Active</Text>
         </View>
 
         <View style={{ height: Spacing.xxxl }} />
       </ScrollView>
+
+      {/* ── Modals ── */}
+      <EditProfileModal
+        visible={showEditProfile}
+        user={user}
+        onClose={() => setShowEditProfile(false)}
+        onSave={handleSaveProfile}
+      />
+
+      <ChangePasswordModal
+        visible={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        onSave={handleSavePassword}
+      />
+
+      <StudyGoalsModal
+        visible={showStudyGoals}
+        preferences={user?.preferences}
+        onClose={() => setShowStudyGoals(false)}
+        onSave={handleSaveGoals}
+      />
+
+      <NotificationPreferencesModal
+        visible={showNotifications}
+        preferences={user?.preferences?.notifications}
+        onClose={() => setShowNotifications(false)}
+        onSave={handleSaveNotifications}
+      />
+
+      <DeleteAccountModal
+        visible={showDeleteAccount}
+        onClose={() => setShowDeleteAccount(false)}
+        onConfirmDelete={handleDeleteAccount}
+      />
     </SafeAreaView>
   );
 }
@@ -243,28 +467,33 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.base },
+  scrollContent: { paddingHorizontal: Spacing.base, paddingTop: Spacing.xs },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.base,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   screenTitle: {
     color: Colors.text,
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     letterSpacing: -0.3,
   },
+  screenSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
   settingsBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -272,134 +501,178 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  avatarSection: {
+  identityCard: {
+    padding: Spacing.md,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  identityRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.xxl,
-    gap: Spacing.sm,
   },
   avatarWrapper: {
-    width: 86,
-    height: 86,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primaryFaded,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderWidth: 2,
     borderColor: Colors.primary,
+    position: 'relative',
+    marginRight: Spacing.md,
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
+  avatarFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.primaryFaded,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
+  },
+  avatarFallbackText: {
+    color: Colors.primary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
   avatarBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.warning,
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.background,
+    borderWidth: 1.5,
+    borderColor: Colors.card,
+  },
+  identityMeta: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   userName: {
     color: Colors.text,
-    fontSize: FontSize.xxl,
+    fontSize: FontSize.base,
     fontWeight: FontWeight.bold,
   },
   userEmail: {
     color: Colors.textSecondary,
-    fontSize: FontSize.base,
-    marginBottom: Spacing.xs,
+    fontSize: FontSize.xs,
+    marginTop: 1,
+  },
+  institutionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 3,
+  },
+  institutionText: {
+    color: Colors.textMuted,
+    fontSize: 11,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  bioBox: {
+    backgroundColor: Colors.background,
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: Colors.primary,
+  },
+  bioText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
+    fontStyle: 'italic',
   },
 
   statsCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.xl,
-    padding: Spacing.base,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    marginVertical: Spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-around',
   },
   profileStat: {
     alignItems: 'center',
-    gap: 4,
     flex: 1,
   },
   statIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: Radius.sm,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
   statValue: {
-    fontSize: FontSize.xl,
+    fontSize: FontSize.base,
     fontWeight: FontWeight.bold,
   },
   statLabel: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    textAlign: 'center',
+    color: Colors.textMuted,
+    fontSize: 10,
+    marginTop: 1,
   },
   statDivider: {
     width: 1,
+    height: 28,
     backgroundColor: Colors.border,
-    alignSelf: 'stretch',
-    marginVertical: Spacing.xs,
   },
 
   sectionLabel: {
     color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: Spacing.sm,
-    paddingLeft: 2,
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.8,
+    marginTop: Spacing.base,
+    marginBottom: Spacing.xs,
+    marginLeft: Spacing.xs,
   },
-
   settingsCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.xl,
-    overflow: 'hidden',
     padding: 0,
+    overflow: 'hidden',
+    marginBottom: Spacing.xs,
   },
   settingsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
   },
   settingsLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
     flex: 1,
   },
   settingsIcon: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.cardSecondary,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   settingsIconDanger: {
-    backgroundColor: Colors.errorFaded,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
   },
   settingsLabel: {
     color: Colors.text,
-    fontSize: FontSize.base,
-    fontWeight: '500',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
   },
   settingsLabelDanger: {
     color: Colors.error,
@@ -411,12 +684,12 @@ const styles = StyleSheet.create({
   },
   settingsValue: {
     color: Colors.textMuted,
-    fontSize: FontSize.sm,
+    fontSize: FontSize.xs,
   },
   separator: {
     height: 1,
     backgroundColor: Colors.border,
-    marginLeft: Spacing.base + 36 + Spacing.md,
+    marginLeft: 54,
   },
 
   appInfo: {
@@ -425,13 +698,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   appInfoText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-    fontWeight: '500',
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
   },
   appInfoSub: {
     color: Colors.textMuted,
-    fontSize: FontSize.xs,
+    fontSize: 10,
   },
 });
-

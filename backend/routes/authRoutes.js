@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { authController } = require('../controllers');
+const { authController, userController } = require('../controllers');
 const { validate, protect } = require('../middleware');
 
 // ─── Validation Schemas ───────────────────────────────────────────────────────
@@ -61,6 +61,12 @@ router.get('/me', protect, authController.getMe);
 
 // POST /api/auth/logout — Stateless logout (protected)
 router.post('/logout', protect, authController.logout);
+
+// PUT /api/auth/update-password — Alias for password change (protected)
+router.put('/update-password', protect, userController.changePassword);
+
+// DELETE /api/auth/delete-account — Alias for account deletion (protected)
+router.delete('/delete-account', protect, userController.deleteAccount);
 
 module.exports = router;
 
