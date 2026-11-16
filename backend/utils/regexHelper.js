@@ -10,3 +10,4 @@ const escapeRegex = (string) => {
 module.exports = {
   escapeRegex,
 };
+
