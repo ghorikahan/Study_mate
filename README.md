@@ -23,8 +23,7 @@
 11. [Testing, QA & Code Quality](#-testing-qa--code-quality)
 12. [Mobile UI Walkthrough & Screens](#-mobile-ui-walkthrough--screens)
 13. [Security & Production Hardening](#-security--production-hardening)
-14. [18-Day Milestone Progress](#-18-day-milestone-progress)
-15. [License & Acknowledgments](#-license--acknowledgments)
+14. [License & Acknowledgments](#-license--acknowledgments)
 
 ---
 
@@ -703,31 +702,6 @@ cd backend && npm run test:all
 - **Bcrypt Password Salt Rounds**: Passwords hashed with 10 salt rounds; plaintext passwords never touch the database or API responses.
 - **Multi-Tenant Ownership Enforced**: Every resource query filters by `user: req.user._id`, strictly preventing cross-user data tampering or inspection.
 - **Graceful Process Handling**: Express server traps `SIGTERM` and `SIGINT` signals to close active database connections before terminating.
-
----
-
-## 🗓️ 18-Day Milestone Progress
-
-| Day | Status | Milestone Summary |
-|:---:|:---:|---|
-| **Day 1** | ✅ Done | Project initialization, Express architecture, MongoDB Atlas configuration, Axios setup, dark UI foundation |
-| **Day 2** | ✅ Done | Reusable UI component system, bottom tab navigation (Home, Planner, Tasks, Exams, Profile), responsive layouts |
-| **Day 3** | ✅ Done | MongoDB backend foundation: User, StudyPlan, Task, Exam, Session, Notification schemas, centralized errors (41/41 tests passing) |
-| **Day 4** | ✅ Done | Secure Authentication APIs: Register, Login, Me, Logout, bcrypt hashing, JWT `protect` & `restrictTo` guards (15/15 tests passing) |
-| **Day 5** | ✅ Done | React Native Auth Integration: Login & Register screens, AuthContext, SecureStore JWT persistence, Axios 401 interceptors |
-| **Day 6** | ✅ Done | Personalized Dashboard: Live stats aggregator, streak highlight, weekly activity chart, today's tasks & exams |
-| **Day 7** | ✅ Done | Study Planner Module: Full CRUD APIs, user ownership isolation, subject chips filter, status toggles, search |
-| **Day 8** | ✅ Done | Smart Task Management: CRUD APIs, Eisenhower priority system, completion toggle with `completedAt`, overdue detection |
-| **Day 9** | ✅ Done | Weekly Timetable & Calendar: Monday–Sunday schedule, overlapping time-slot conflict detection, subject color chips |
-| **Day 10** | ✅ Done | Exam Countdown Tracker: CRUD APIs, countdown calculation, syllabus topic management & progress tracking |
-| **Day 11** | ✅ Done | Focus Timer & Pomodoro: 25/5/15 cycles, wall-clock AppState restoration, session duplicate prevention, streak update |
-| **Day 12** | ✅ Done | Productivity Analytics: 7d/30d/all study breakdown, subject distribution, task metrics, composite productivity score (0–100) |
-| **Day 13** | ✅ Done | Profile & Settings: Profile editing, 8 avatar presets, secure password update, study goals, cascade account deletion |
-| **Day 14** | ✅ Done | Notifications & Reminders: In-app notification center, auto-reminder generator (≤3d exams, tasks, streak), Expo Android channel |
-| **Day 15** | ✅ Done | Integration & Refinement Pass: Cross-module search & multi-filtering, safe regex escaping (`regexHelper.js`), dead code removal |
-| **Day 16** | ✅ Done | Comprehensive QA Pass: Master QA suite (27/27 passing), temporal dead zone fixes, 0 TypeScript errors, 0 ESLint warnings |
-| **Day 17** | ✅ Done | Production Deployment & College Documentation: Render Blueprint (`render.yaml`), Atlas security guide, production verifier, complete README |
-| **Day 18** | 🔜 Up Next | Final Release Verification, Physical Device Polish & Project Submission |
 
 ---
 

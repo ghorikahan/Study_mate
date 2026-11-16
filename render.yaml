@@ -26,3 +26,4 @@ services:
         generateValue: true # Render will generate a cryptographically secure 256-bit random string
       - key: MONGODB_URI
         sync: false # Prompts user to securely input MongoDB Atlas connection string during setup
+
