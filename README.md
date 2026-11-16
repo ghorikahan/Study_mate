@@ -64,6 +64,7 @@ StudyMate/
 │   │   ├── studySessionController.js # Focus timer session handlers (Pomodoro logging, stats, streak update, deduplication)
 │   │   ├── analyticsController.js # Day 12 Analytics module aggregation (daily breakdown, subject distribution, productivity score)
 │   │   ├── userController.js     # Day 13 Profile, password change, study goals, notifications & cascade account deletion
+│   │   ├── notificationController.js # Day 14 In-app notifications, dedupKey, exam/task/streak auto-reminders
 │   │   └── index.js              # Controllers barrel export
 │   ├── middleware/
 │   │   ├── errorHandler.js       # Centralized error handler (CastError, 11000 duplicate, Validation, JWT)
@@ -91,6 +92,7 @@ StudyMate/
 │   │   ├── studySessionRoutes.js # Focus timer & study session routes (GET, POST, /stats, DELETE)
 │   │   ├── analyticsRoutes.js    # Analytics overview routes (GET /api/analytics/overview with 7d/30d/all filters)
 │   │   ├── userRoutes.js        # User profile, password, preferences, cascade account deletion routes
+│   │   ├── notificationRoutes.js # In-app notifications & auto-reminder generation routes (GET, POST, PATCH, DELETE)
 │   │   └── index.js              # Central API router aggregator
 │   ├── utils/
 │   │   ├── appError.js           # Custom operational AppError class
@@ -111,6 +113,7 @@ StudyMate/
 │   ├── test_focus_timer.js       # Day 11 focus timer & pomodoro test suite (45/45 passing)
 │   ├── test_analytics.js         # Day 12 analytics aggregation test suite (36/36 passing)
 │   ├── test_profile_settings.js  # Day 13 profile & settings test suite (40/40 passing)
+│   ├── test_notifications.js     # Day 14 notifications & reminders test suite (31/31 passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -130,7 +133,8 @@ StudyMate/
 │   │   ├── index.tsx             # Root auth redirect guard
 │   │   ├── timetable.tsx         # 📅 Weekly Timetable & Calendar screen (Mon–Sun strip, daily sessions, bar chart)
 │   │   ├── focus.tsx             # ⏱️ Focus Timer screen (Pomodoro 25m/5m/15m, subject picker, circular timer, stats)
-│   │   └── analytics.tsx         # 📊 StudyMate Analytics screen (Time filter, study hours chart, subject distribution, task metrics)
+│   │   ├── analytics.tsx         # 📊 StudyMate Analytics screen (Time filter, study hours chart, subject distribution, task metrics)
+│   │   └── notifications.tsx     # 🔔 StudyMate Notifications screen (Category filters, mark all read, device test trigger)
 │   ├── components/               # Modular UI components
 │   │   ├── ui/                   # Reusable UI component library
 │   │   │   ├── Badge.tsx         # Color-coded badge pills with optional dot
@@ -175,7 +179,8 @@ StudyMate/
 │   │   ├── useTimetable.ts       # Weekly timetable hook with week navigation, day filtering & CRUD operations
 │   │   ├── useExams.ts           # Exam tracker hook with CRUD, topic toggle, filters & state management
 │   │   ├── useFocusTimer.ts      # Focus timer hook with background sync, wall-clock restoration & Pomodoro cycles
-│   │   └── useAnalytics.ts       # Analytics aggregation hook with time-range filtering (7d/30d/all) & pull-to-refresh
+│   │   ├── useAnalytics.ts       # Analytics aggregation hook with time-range filtering (7d/30d/all) & pull-to-refresh
+│   │   └── useNotifications.ts   # Notifications hook with unread badge counter, optimistic read/delete & filters
 │   ├── services/
 │   │   ├── api.ts                # Central Axios client with token injection & 401 interceptors
 │   │   ├── authService.ts        # Auth API endpoints (login, register, me, logout, error handling)
@@ -187,6 +192,7 @@ StudyMate/
 │   │   ├── studySessionService.ts # Focus timer REST client (create, getSessions, getStats, deleteSession)
 │   │   ├── analyticsService.ts   # Analytics REST client (getOverview with time-range filters)
 │   │   ├── userService.ts        # User profile, password, preferences & account deletion REST client
+│   │   ├── notificationService.ts # Notifications REST client & Expo local notification scheduler with Android channel
 │   │   └── storage.ts            # Secure token & user persistence via expo-secure-store
 │   ├── types/
 │   │   ├── api.ts                # TypeScript interfaces for API & health responses
@@ -199,6 +205,7 @@ StudyMate/
 │   │   ├── studySession.ts       # StudySession, SessionType, stats, inputs & responses
 │   │   ├── analytics.ts          # DailyBreakdownItem, SubjectDistributionItem, AnalyticsOverviewData interfaces
 │   │   ├── user.ts               # UserStats, profile input, password input, preferences, cascade delete interfaces
+│   │   ├── notification.ts       # NotificationItem, NotificationType, NotificationPriority, response interfaces
 │   │   └── index.ts              # Types barrel export
 │   ├── app.json                  # Expo SDK 58 application configuration
 │   ├── package.json              # Frontend dependencies & scripts
@@ -259,6 +266,13 @@ StudyMate/
 | `PUT` | `/api/users/password` | Securely change password (requires currentPassword, validates min 6 chars) | 🔒 Protected | `{ success: true, message, data: { user } }` |
 | `PUT` | `/api/users/preferences` | Update weekly/daily study targets, default focus minutes & notification toggles | 🔒 Protected | `{ success: true, message, data: { user } }` |
 | `DELETE` | `/api/users/account` | Irreversible account deletion with cascade cleanup of all student data | 🔒 Protected | `{ success: true, message, data: { cascadeSummary } }` |
+| `GET` | `/api/notifications` | Read user notifications with unreadOnly/type filters, pagination & unreadCount | 🔒 Protected | `{ success: true, message, data: { notifications, total, unreadCount } }` |
+| `POST` | `/api/notifications/generate-reminders` | Scan upcoming exams (≤3d), tasks due today/overdue & streak to auto-create duplicate-safe reminders | 🔒 Protected | `{ success: true, message, data: { generated, count } }` |
+| `PATCH` | `/api/notifications/read-all` | Mark all unread notifications as read for current user | 🔒 Protected | `{ success: true, message, data: { count } }` |
+| `PATCH` | `/api/notifications/:id/read` | Mark single notification as read (user ownership enforced) | 🔒 Protected | `{ success: true, message, data: { notification } }` |
+| `DELETE` | `/api/notifications/:id` | Delete single notification (user ownership enforced) | 🔒 Protected | `{ success: true, message }` |
+| `DELETE` | `/api/notifications` | Clear notifications for user (optional query ?unreadOnly=false) | 🔒 Protected | `{ success: true, message, data: { deletedCount } }` |
+| `POST` | `/api/notifications` | Create notification manually with dedupKey support | 🔒 Protected | `{ success: true, message, data: { notification } }` |
 | `*` | `*` | 404 Route Not Found handler | Public | `{ success: false, message: "Endpoint ... does not exist" }` |
 
 ---
@@ -337,5 +351,6 @@ StudyMate/
 | **Day 11** | ✅ Done | Focus Timer & Pomodoro Module: Reliable 25-minute focus sessions, 5-minute short breaks, 15-minute long breaks, start/pause/resume/reset controls, subject selector with popular suggestions, MongoDB session persistence (POST /api/study-sessions) with actual study duration calculation, clientSessionId and time-window duplicate prevention, app backgrounding & wall-clock restoration with AppState sync, streak auto-update, FocusCompleteModal with star ratings & notes, 0 TypeScript errors, 45/45 unit tests passing (181 total assertions) |
 | **Day 12** | ✅ Done | Analytics & Insights Module: High-performance MongoDB aggregation APIs (GET /api/analytics/overview), continuous daily study breakdown (7d/30d/all), subject distribution with percentage & star rating breakdown, task completion rate & metrics, monthly goal tracking progress, composite productivity score (0–100), full Analytics screen with time filters, 0 TypeScript errors, 36/36 unit tests passing (217 total assertions) |
 | **Day 13** | ✅ Done | User Profile & Settings Module: Display & edit user profile (name, bio, institution, 8 curated avatar presets + custom URL), secure password change with strength scoring, study goal configurations (weekly/daily targets & focus session defaults), notification & audio alert preferences, sign-out workflow, and irreversible account deletion workflow with cascade cleanup (plans, tasks, exams, focus logs, timetable, notifications), 0 TypeScript errors, 40/40 unit tests passing (257 total assertions) |
-| **Day 14** | 🔜 Up Next | Push & Local Notifications Module: Scheduled daily study reminders, urgent exam alerts, task deadline warnings, streak retention notifications |
-| **Day 15–18** | 🔜 Scheduled | Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |
+| **Day 14** | ✅ Done | Notifications & Reminders Module: In-app notification center, unread counter badge in home header, category filter chips (all, unread, exams, tasks, streak), mark all as read & optimistic deletion, Expo Notifications SDK 58 integration with Android notification channel (`studymate-reminders`, high importance, vibration, sound), instant test notification trigger for physical Android devices, backend notificationController & notificationRoutes with duplicate prevention via dedupKey index, auto-reminder generator for upcoming exams (≤3d), tasks due today/overdue & daily streak respecting user preferences, 0 TypeScript errors, 31/31 unit tests passing (288 total backend assertions) |
+| **Day 15** | 🔜 Up Next | Data Backup, Export & Offline Support: Export study records to JSON/CSV, cache offline data, auto-sync when online |
+| **Day 16–18** | 🔜 Scheduled | Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |

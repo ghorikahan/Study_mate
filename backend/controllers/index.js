@@ -8,6 +8,7 @@ const examController = require('./examController');
 const studySessionController = require('./studySessionController');
 const analyticsController = require('./analyticsController');
 const userController = require('./userController');
+const notificationController = require('./notificationController');
 
 module.exports = {
   healthController,
@@ -20,4 +21,5 @@ module.exports = {
   studySessionController,
   analyticsController,
   userController,
+  notificationController,
 };

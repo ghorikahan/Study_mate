@@ -57,6 +57,11 @@ const notificationSchema = new mongoose.Schema(
       default: Date.now,
       index: true,
     },
+    dedupKey: {
+      type: String,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -66,6 +71,7 @@ const notificationSchema = new mongoose.Schema(
 // Indexes
 notificationSchema.index({ user: 1, isRead: 1, createdAt: -1 });
 notificationSchema.index({ user: 1, scheduledFor: 1 });
+notificationSchema.index({ user: 1, dedupKey: 1 });
 
 const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
 

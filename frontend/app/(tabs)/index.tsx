@@ -28,12 +28,14 @@ import {
   Award,
   LayoutGrid,
   Timer,
+  Bell,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState, Button } from '../../components/ui';
 import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboard } from '../../hooks/useDashboard';
+import { useNotifications } from '../../hooks/useNotifications';
 import { TodayTask, UpcomingExam, DailyStudyItem } from '../../types/dashboard';
 
 // ─── Greeting Helper ──────────────────────────────────────────────────────────
@@ -189,6 +191,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { summary, loading, refreshing, error, refresh, refetch } = useDashboard();
+  const { unreadCount } = useNotifications();
 
   const rawStreak = summary?.user.studyStreak ?? user?.studyStreak ?? 0;
   const streak: number =
@@ -221,19 +224,36 @@ export default function HomeScreen() {
               Plan Smart. Study Better. Achieve More.
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.avatarWrapper}
-            onPress={() => router.push('/(tabs)/profile' as any)}
-            activeOpacity={0.8}
-          >
-            <GraduationCap size={24} color={Colors.primary} />
-            {streak > 0 && (
-              <View style={styles.avatarStreakPill}>
-                <Flame size={10} color={Colors.warning} />
-                <Text style={styles.avatarStreakText}>{streak}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          <View style={styles.headerRightGroup}>
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => router.push('/notifications' as any)}
+              activeOpacity={0.8}
+            >
+              <Bell size={20} color={Colors.text} />
+              {unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              onPress={() => router.push('/(tabs)/profile' as any)}
+              activeOpacity={0.8}
+            >
+              <GraduationCap size={24} color={Colors.primary} />
+              {streak > 0 && (
+                <View style={styles.avatarStreakPill}>
+                  <Flame size={10} color={Colors.warning} />
+                  <Text style={styles.avatarStreakText}>{streak}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Error Banner (if fetch failed) ── */}
@@ -571,16 +591,51 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     marginTop: 2,
   },
-  avatarWrapper: {
-    width: 52,
-    height: 52,
+  headerRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginLeft: Spacing.sm,
+  },
+  bellBtn: {
+    width: 44,
+    height: 44,
     borderRadius: Radius.lg,
     backgroundColor: Colors.card,
     borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing.base,
+    position: 'relative',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.error,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: Colors.background,
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: FontWeight.bold,
+  },
+  avatarWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.card,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarStreakPill: {
     position: 'absolute',

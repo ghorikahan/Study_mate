@@ -8,4 +8,5 @@ export * from './exam';
 export * from './studySession';
 export * from './analytics';
 export * from './user';
+export * from './notification';
 
