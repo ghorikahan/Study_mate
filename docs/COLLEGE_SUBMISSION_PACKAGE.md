@@ -23,8 +23,7 @@
 6. [College Presentation Slides Outline (PPT Script)](#6-college-presentation-slides-outline)
 7. [Step-by-Step Live Demo Script for Examiners](#7-step-by-step-live-demo-script-for-examiners)
 8. [Installation & Examiner Setup Guide](#8-installation--examiner-setup-guide)
-9. [Comprehensive Viva Voce Questions & High-Scoring Answers (20 Questions)](#9-viva-voce-questions--answers)
-10. [Final College Submission Checklist](#10-final-college-submission-checklist)
+9. [Final College Submission Checklist](#9-final-college-submission-checklist)
 
 ---
 
@@ -536,83 +535,9 @@ npm run start
 
 ---
 
-## 9. Viva Voce Questions & Answers
+## 9. Final College Submission Checklist
 
-Be thoroughly prepared for these 20 technical questions commonly asked by college examiners:
-
-#### Q1: Why did you choose React Native with Expo rather than native Android (Kotlin/Java)?
-**Answer**: React Native allows a unified cross-platform codebase written in TypeScript, cutting development and maintenance overhead by nearly 50%. Expo SDK 58 provides a managed workflow with file-based routing (`expo-router`), direct hardware-backed secure storage (`expo-secure-store`), and native notification channel drivers (`expo-notifications`) while retaining the ability to eject via Expo Prebuild if native Android modules are required.
-
-#### Q2: How does StudyMate handle authentication, and why is it stateless?
-**Answer**: Authentication uses JSON Web Tokens (JWT). When a user logs in, the backend verifies the bcrypt password hash and signs a token containing `{ id: user._id }` using a 256-bit secret key. The token is stored on the client using `expo-secure-store` and transmitted in the `Authorization: Bearer <token>` header. It is stateless because the server does not store active session records in memory or database; validity is verified purely via cryptographic signature verification, allowing horizontal scaling.
-
-#### Q3: Why is bcrypt used instead of SHA-256 or MD5 for password storage?
-**Answer**: MD5 and SHA-256 are fast cryptographic hash functions designed for throughput, making them vulnerable to brute-force attacks and rainbow tables. Bcrypt is a slow, compute-intensive key derivation function featuring configurable salt rounds (we use 10 rounds). It incorporates unique salts automatically into the hash and utilizes the Eksblowfish algorithm, resisting GPU-accelerated dictionary attacks.
-
-#### Q4: How did you solve timer drift when the phone screen is locked or the app is backgrounded?
-**Answer**: Standard JavaScript timers (`setInterval`, `setTimeout`) are throttled or frozen by mobile OS battery management when the app is backgrounded. We solved this by recording `targetEndTimeRef.current = Date.now() + durationMs`. When React Native's `AppState` listener detects a transition from `background` back to `active`, the hook calculates `remaining = Math.max(0, Math.round((targetEndTime - Date.now()) / 1000))`. This guarantees 100% accurate elapsed time regardless of how long the device was asleep.
-
-#### Q5: How do you prevent double-counting focus sessions if a user taps save multiple times or network lags?
-**Answer**: We implement idempotency at both client and database levels. The client generates a unique `clientSessionId` (UUID) when starting the timer. In MongoDB, the `StudySession` schema defines a sparse unique index on `clientSessionId`. If the network retries or the user double-taps save, the database rejects the duplicate with error code 11000, preventing redundant study hours.
-
-#### Q6: Explain how your timetable conflict detection algorithm works.
-**Answer**: Before creating or updating a timetable entry, the server queries existing sessions for that user on that specific `dayOfWeek`. Two time intervals $(S_1, E_1)$ and $(S_2, E_2)$ overlap if and only if $S_1 < E_2$ and $E_1 > S_2$. The controller executes this check; if any existing slot matches, it aborts the database write and returns HTTP 400 with a detailed conflict error message.
-
-#### Q7: What are Mongoose Virtuals and where did you use them?
-**Answer**: Mongoose virtuals are document properties that you can get and set but that do not get persisted to MongoDB. We used virtuals for:
-1. `Exam.daysRemaining`: Calculates difference between exam date and current date dynamically.
-2. `Exam.syllabusProgressPercent`: Computes topic coverage percentage from the subdocument array.
-3. `Task.isOverdue`: Evaluates if current date exceeds deadline and status is not completed.
-This prevents storing redundant, quickly outdated calculated data in the database.
-
-#### Q8: How is multi-tenant data ownership enforced? Can User A access User B's tasks?
-**Answer**: Multi-tenancy is enforced strictly at the database query level. Every protected route passes through `protect` middleware which decodes the JWT and attaches `req.user`. Every Mongoose query explicitly filters by `user: req.user._id` (e.g., `Task.find({ user: req.user._id })`). In `getById`, `update`, and `delete` handlers, the controller verifies `doc.user.toString() === req.user._id.toString()`, rejecting unauthorized requests with HTTP 403/404.
-
-#### Q9: What happens when a user deletes their account? How do you prevent orphaned records?
-**Answer**: In `userController.js`, we implemented an atomic cascade deletion workflow. Before deleting the `User` document, the backend deletes all associated records across all related collections: `StudyPlan.deleteMany({ user })`, `Task.deleteMany({ user })`, `Exam.deleteMany({ user })`, `StudySession.deleteMany({ user })`, `Timetable.deleteMany({ user })`, and `Notification.deleteMany({ user })`. This eliminates orphaned records and complies with privacy regulations (GDPR/right to erasure).
-
-#### Q10: How did you implement safe regex search for special characters like `C++` or `[Math]`?
-**Answer**: Standard regex compilation (`new RegExp(query)`) throws syntax errors or behaves unpredictably when users search terms with regex metacharacters (`+`, `*`, `[`, `]`, `(`, `)`). We engineered a utility `regexHelper.js` with `escapeRegex` that escapes all special characters with backslashes before passing the pattern to MongoDB's `$regex` operator.
-
-#### Q11: Why did you configure a 25-second timeout on the frontend Axios client?
-**Answer**: On cloud platform-as-a-service providers like Render free tier, web services spin down after 15 minutes of inactivity. When a mobile client makes a request to a dormant instance, the container takes 15 to 30 seconds to wake up (cold start). A standard 5-second or 10-second timeout causes false network timeout errors; a 25-second timeout gives the cloud container sufficient buffer to boot gracefully.
-
-#### Q12: How does the in-app notification deduplication mechanism work?
-**Answer**: In `notificationController.js`, each automated reminder is assigned a deterministic `dedupKey` (e.g. `exam_reminder_<examId>_<daysRemaining>`). The `Notification` schema enforces a compound unique index on `{ user: 1, dedupKey: 1 }`. When the scanner runs periodically, duplicate reminders for the same event on the same day are silently caught and skipped.
-
-#### Q13: What is the purpose of `app.set('trust proxy', 1)` in Express?
-**Answer**: When deploying behind a reverse proxy (such as Render, AWS ALB, NGINX, or Cloudflare), the client connects to the proxy via HTTPS, and the proxy forwards requests to Express over HTTP. Without `trust proxy`, Express assumes all connections are insecure HTTP, misidentifies client IP addresses (reading the proxy's internal IP instead of the client's), and breaks secure cookie or rate-limiting headers. Setting `trust proxy` instructs Express to trust `X-Forwarded-*` headers.
-
-#### Q14: How does StudyMate handle centralized error handling?
-**Answer**: We created a custom `AppError` class extending JavaScript's `Error`, capturing `statusCode` and operational error status. Route controllers are wrapped in an `asyncHandler` utility that automatically passes rejected promises to Express's `next(err)`. The centralized `errorHandler` middleware intercepts all errors, formatting Mongoose `CastError` to 404, duplicate key `11000` to 400, and JWT errors to 401, guaranteeing consistent JSON error contracts.
-
-#### Q15: What design system and color palette was chosen for StudyMate?
-**Answer**: StudyMate uses a custom dark obsidian design system optimized for student study environments with low eye strain. The palette uses deep black canvas (`#0B0D12`), elevated card surfaces (`#151923`), vivid electric purple accent (`#8B5CF6`), radiant neon cyan secondary accent (`#22D3EE`), emerald green for completions (`#10B981`), amber for alerts (`#F59E0B`), and crimson red for overdue deadlines (`#EF4444`).
-
-#### Q16: How is study streak calculated?
-**Answer**: When a user completes and logs a focus session in `StudySession`, the backend compares the session date with `user.lastStudyDate`. If the session is on the same calendar day, the streak remains unchanged. If it is consecutive (yesterday + 1 day), `currentStreak` increments by 1. If more than 1 day was missed, the streak resets to 1. `longestStreak` is updated whenever `currentStreak` exceeds it.
-
-#### Q17: What is the composite productivity score algorithm in Analytics?
-**Answer**: The productivity score is calculated on a 0–100 scale using a weighted composite formula:
-- **Study Goal Progress (40%)**: Ratio of actual study hours logged to the student's weekly study goal.
-- **Task Completion Ratio (40%)**: Ratio of completed tasks to total assigned tasks within the time period.
-- **Average Focus Rating (20%)**: Student self-reported focus quality (1–5 stars converted to percentage).
-The score floors at 10 to encourage continued progress even on inactive days.
-
-#### Q18: What is Render Blueprint (`render.yaml`)?
-**Answer**: `render.yaml` is an Infrastructure-as-Code (IaC) configuration file. When connected to Render, it automatically provisions the Web Service with exact build commands (`npm install`), start commands (`npm start`), health check routes (`/api/health`), port configurations, and auto-generated cryptographically secure environment secrets without requiring manual dashboard clicking.
-
-#### Q19: Why does the backend bind to `0.0.0.0` instead of `localhost` in `server.js`?
-**Answer**: Binding to `localhost` (`127.0.0.1`) only accepts loopback traffic originating from within the local container. In production cloud environments (Docker containers, Render, AWS ECS), incoming HTTP requests arrive from external ingress routing load balancers. Binding to `0.0.0.0` tells the Node.js HTTP server to listen on all available network interfaces.
-
-#### Q20: What are your project's main contributions to academic productivity?
-**Answer**: StudyMate delivers an integrated, distraction-free mobile solution where calendar timetables, task lists, syllabus checklists, and Pomodoro timers reinforce one another. By eliminating friction between planning and deep execution, providing collision-proof timetables, and persisting study session metrics reliably, it directly combats student procrastination and academic disorganization.
-
----
-
-## 10. Final College Submission Checklist
-
-Ensure all items are verified before your final project presentation and viva voce:
+Ensure all items are verified before your final project presentation:
 
 - [x] **Source Code**: Clean Git working tree on branch `main` at [https://github.com/ghorikahan/Study_mate.git](https://github.com/ghorikahan/Study_mate.git).
 - [x] **Zero TypeScript Errors**: Verified via `npx tsc --noEmit` on Expo SDK 58.
@@ -622,5 +547,6 @@ Ensure all items are verified before your final project presentation and viva vo
 - [x] **Security Hardening**: Zero hardcoded secrets, `.env` strictly ignored by `.gitignore`, passwords salted with bcrypt, JWT authorization guards active.
 - [x] **Cloud Readiness**: Render Infrastructure-as-Code Blueprint (`render.yaml`) committed.
 - [x] **Database Indexing**: Compound indexes applied on User, StudyPlan, Task, Timetable, Exam, StudySession, and Notification collections.
-- [x] **Documentation**: Complete Project Report, Architecture Diagrams, API references, Demo Script, and Viva Q&A compiled.
+- [x] **Documentation**: Complete Project Report, Architecture Diagrams, API references, and Demo Script compiled.
 - [x] **Device Verification**: Tested on Android physical device with Expo Go.
+

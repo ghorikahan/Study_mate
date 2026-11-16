@@ -9,7 +9,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js_v22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 
-> 🎓 **Academic Evaluation**: For the comprehensive Project Report, Architecture Diagrams, Database ERDs, Presentation Slides Outline, Examiner Demo Script, and 20 Viva Voce Questions & Answers, view the [docs/COLLEGE_SUBMISSION_PACKAGE.md](docs/COLLEGE_SUBMISSION_PACKAGE.md).
+> 🎓 **Academic Evaluation**: For the comprehensive Project Report, Architecture Diagrams, Database ERDs, Presentation Slides Outline, and Examiner Demo Script, view the [docs/COLLEGE_SUBMISSION_PACKAGE.md](docs/COLLEGE_SUBMISSION_PACKAGE.md).
 
 ---
 
