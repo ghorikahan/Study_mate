@@ -17,7 +17,8 @@
     "test:analytics": "node test_analytics.js",
     "test:profile": "node test_profile_settings.js",
     "test:notifications": "node test_notifications.js",
-    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js && node test_tasks.js && node test_timetable.js && node test_exams.js && node test_focus_timer.js && node test_analytics.js && node test_profile_settings.js && node test_notifications.js"
+    "test:refinement": "node test_refinement.js",
+    "test:all": "node test_backend.js && node test_auth.js && node test_dashboard.js && node test_study_plans.js && node test_tasks.js && node test_timetable.js && node test_exams.js && node test_focus_timer.js && node test_analytics.js && node test_profile_settings.js && node test_notifications.js && node test_refinement.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

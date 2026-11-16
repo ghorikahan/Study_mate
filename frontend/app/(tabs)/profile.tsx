@@ -220,6 +220,14 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleThemeInfo = () => {
+    Alert.alert(
+      'Obsidian Pure-Dark Theme 🌙',
+      'StudyMate is permanently styled in an obsidian pure-dark UI designed for high-contrast focus and battery conservation on OLED displays.\n\n• Background: #0B0D12\n• Primary Accent: Electric Purple (#8B5CF6)\n• Secondary Accent: Neon Cyan (#22D3EE)',
+      [{ text: 'Great' }]
+    );
+  };
+
   const displayName = user?.name || 'Student Scholar';
   const displayEmail = user?.email || 'student@studymate.app';
   const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Verified Scholar';
@@ -386,7 +394,7 @@ export default function ProfileScreen() {
             icon={<Moon size={18} color={Colors.info} />}
             label="App Theme"
             value="Dark Mode"
-            onPress={() => {}}
+            onPress={handleThemeInfo}
           />
           <View style={styles.separator} />
           <SettingsRow
@@ -421,7 +429,7 @@ export default function ProfileScreen() {
           <Text style={styles.appInfoSub}>
             Plan Smart. Study Better. Achieve More.
           </Text>
-          <Text style={styles.appInfoSub}>Day 13 — Profile & Settings Active</Text>
+          <Text style={styles.appInfoSub}>Academic Productivity Edition • Fully Verified</Text>
         </View>
 
         <View style={{ height: Spacing.xxxl }} />

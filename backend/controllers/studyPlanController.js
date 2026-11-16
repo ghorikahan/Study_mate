@@ -2,6 +2,7 @@ const { StudyPlan } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/appError');
 const { successResponse } = require('../utils/responseHandler');
+const { escapeRegex } = require('../utils');
 
 /**
  * POST /api/study-plans
@@ -96,7 +97,7 @@ const getStudyPlans = asyncHandler(async (req, res) => {
 
   // Filter by subject
   if (subject && subject.trim() && subject.trim().toLowerCase() !== 'all') {
-    query.subject = new RegExp(`^${subject.trim()}$`, 'i');
+    query.subject = new RegExp(`^${escapeRegex(subject.trim())}$`, 'i');
   }
 
   // Filter by priority
@@ -137,9 +138,9 @@ const getStudyPlans = asyncHandler(async (req, res) => {
     }
   }
 
-  // Search in topic, title, description, or subject
+  // Search in topic, title, description, or subject safely
   if (search && search.trim()) {
-    const searchRegex = new RegExp(search.trim(), 'i');
+    const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
     query.$or = [
       { topic: searchRegex },
       { title: searchRegex },
@@ -154,10 +155,20 @@ const getStudyPlans = asyncHandler(async (req, res) => {
   if (sort === 'priority_desc') sortOption = { priority: -1, date: 1 };
   if (sort === 'created_desc') sortOption = { createdAt: -1 };
 
+  // Pagination support
+  const pageNum = req.query.page ? Math.max(1, parseInt(req.query.page, 10)) : 1;
+  const limitNum = req.query.limit ? Math.max(1, parseInt(req.query.limit, 10)) : 0; // 0 = unlimited
+
+  let plansQuery = StudyPlan.find(query).sort(sortOption);
+  if (limitNum > 0) {
+    plansQuery = plansQuery.skip((pageNum - 1) * limitNum).limit(limitNum);
+  }
+
   // Fetch plans and user subjects list in parallel
-  const [studyPlans, distinctSubjects] = await Promise.all([
-    StudyPlan.find(query).sort(sortOption),
+  const [studyPlans, distinctSubjects, totalCount] = await Promise.all([
+    plansQuery,
     StudyPlan.distinct('subject', { user: userId }),
+    StudyPlan.countDocuments(query),
   ]);
 
   return successResponse(res, {
@@ -165,8 +176,10 @@ const getStudyPlans = asyncHandler(async (req, res) => {
     message: 'Study plans retrieved successfully',
     data: {
       studyPlans,
-      total: studyPlans.length,
+      total: totalCount,
       subjects: distinctSubjects.filter(Boolean).sort(),
+      page: pageNum,
+      limit: limitNum > 0 ? limitNum : totalCount,
     },
   });
 });

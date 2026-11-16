@@ -27,6 +27,7 @@ import {
   Filter,
   Sparkles,
   LayoutGrid,
+  X,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState, Button } from '../../components/ui';
@@ -37,6 +38,14 @@ import StudyPlanModal from '../../components/StudyPlanModal';
 
 type FilterTab = 'All' | 'Active' | 'Completed' | 'Today';
 const FILTER_TABS: FilterTab[] = ['All', 'Active', 'Completed', 'Today'];
+
+const PRIORITY_FILTERS = [
+  { key: 'All', label: 'All Priorities', color: Colors.textSecondary },
+  { key: 'urgent', label: 'Urgent', color: Colors.error },
+  { key: 'high', label: 'High', color: Colors.warning },
+  { key: 'medium', label: 'Medium', color: Colors.primary },
+  { key: 'low', label: 'Low', color: Colors.success },
+];
 
 const getPriorityVariant = (priority: StudyPlanPriority): 'error' | 'warning' | 'primary' | 'neutral' => {
   switch (priority) {
@@ -82,6 +91,7 @@ export default function PlannerScreen() {
 
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
+  const [selectedPriority, setSelectedPriority] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modal state
@@ -117,7 +127,15 @@ export default function PlannerScreen() {
         return false;
       }
 
-      // 3. Search query
+      // 3. Priority filter
+      if (
+        selectedPriority !== 'All' &&
+        plan.priority.toLowerCase() !== selectedPriority.toLowerCase()
+      ) {
+        return false;
+      }
+
+      // 4. Search query
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase();
         const matchesTopic = (plan.topic || plan.title || '')
@@ -134,7 +152,21 @@ export default function PlannerScreen() {
 
       return true;
     });
-  }, [plans, activeTab, selectedSubject, searchQuery]);
+  }, [plans, activeTab, selectedSubject, selectedPriority, searchQuery]);
+
+  const hasActiveFilters = Boolean(
+    activeTab !== 'All' ||
+    selectedSubject !== 'All' ||
+    selectedPriority !== 'All' ||
+    searchQuery.trim()
+  );
+
+  const handleResetFilters = () => {
+    setActiveTab('All');
+    setSelectedSubject('All');
+    setSelectedPriority('All');
+    setSearchQuery('');
+  };
 
   // Handle open modal for create
   const handleOpenCreate = () => {
@@ -240,6 +272,11 @@ export default function PlannerScreen() {
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={16} color={Colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Filter Tabs (All, Active, Completed, Today) ── */}
@@ -265,6 +302,45 @@ export default function PlannerScreen() {
             );
           })}
         </View>
+
+        {/* ── Priority Filter Chips ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.filtersRow, { marginTop: Spacing.sm }]}
+        >
+          {PRIORITY_FILTERS.map((p) => {
+            const isSelected = selectedPriority.toLowerCase() === p.key.toLowerCase();
+            return (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.filterChip, isSelected && styles.filterChipActive]}
+                onPress={() => setSelectedPriority(p.key)}
+                activeOpacity={0.8}
+              >
+                {p.key !== 'All' && (
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: p.color,
+                      marginRight: 6,
+                    }}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.filterText,
+                    isSelected && styles.filterTextActive,
+                  ]}
+                >
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
         {/* ── Subjects Filter Chips ── */}
         <View style={styles.sectionHeader}>
@@ -343,15 +419,17 @@ export default function PlannerScreen() {
                   ? 'No matching study plans'
                   : selectedSubject !== 'All'
                   ? `No plans for ${selectedSubject}`
+                  : selectedPriority !== 'All'
+                  ? `No ${selectedPriority} priority plans`
                   : activeFilterEmptyTitle(activeTab)
               }
               description={
-                searchQuery
-                  ? 'Try searching with different keywords.'
+                hasActiveFilters
+                  ? 'Try searching with different keywords or clearing your active filters.'
                   : 'Organize your topics, schedule study time, and track your syllabus.'
               }
-              actionLabel="Create Study Plan"
-              onAction={handleOpenCreate}
+              actionLabel={hasActiveFilters ? 'Reset Filters' : 'Create Study Plan'}
+              onAction={hasActiveFilters ? handleResetFilters : handleOpenCreate}
             />
           </Card>
         ) : (

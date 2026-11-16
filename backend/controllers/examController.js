@@ -1,4 +1,5 @@
 const Exam = require('../models/Exam');
+const { escapeRegex } = require('../utils');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -12,17 +13,20 @@ const sanitiseTopics = (raw) => {
     }));
 };
 
-const buildFilter = (userId, { status, subject, search }) => {
+const buildFilter = (userId, { status, subject, priority, search }) => {
   const filter = { user: userId };
+  const andClauses = [];
 
   if (status === 'upcoming') {
     filter.examDate = { $gte: new Date() };
     filter.status = { $in: ['upcoming', 'in-progress'] };
   } else if (status === 'past') {
-    filter.$or = [
-      { examDate: { $lt: new Date() } },
-      { status: { $in: ['completed', 'cancelled'] } },
-    ];
+    andClauses.push({
+      $or: [
+        { examDate: { $lt: new Date() } },
+        { status: { $in: ['completed', 'cancelled'] } },
+      ],
+    });
   } else if (status === 'this-week') {
     const now = new Date();
     const weekEnd = new Date(now);
@@ -30,15 +34,29 @@ const buildFilter = (userId, { status, subject, search }) => {
     filter.examDate = { $gte: now, $lte: weekEnd };
   }
 
-  if (subject && subject.trim()) {
-    filter.subject = { $regex: subject.trim(), $options: 'i' };
+  if (priority && priority.trim() && priority.trim().toLowerCase() !== 'all') {
+    filter.priority = priority.trim().toLowerCase();
+  }
+
+  if (subject && subject.trim() && subject.trim().toLowerCase() !== 'all') {
+    filter.subject = { $regex: `^${escapeRegex(subject.trim())}$`, $options: 'i' };
   }
 
   if (search && search.trim()) {
-    filter.$or = [
-      { examTitle: { $regex: search.trim(), $options: 'i' } },
-      { subject: { $regex: search.trim(), $options: 'i' } },
-    ];
+    const safeRegex = escapeRegex(search.trim());
+    andClauses.push({
+      $or: [
+        { examTitle: { $regex: safeRegex, $options: 'i' } },
+        { subject: { $regex: safeRegex, $options: 'i' } },
+        { notes: { $regex: safeRegex, $options: 'i' } },
+      ],
+    });
+  }
+
+  if (andClauses.length === 1) {
+    Object.assign(filter, andClauses[0]);
+  } else if (andClauses.length > 1) {
+    filter.$and = andClauses;
   }
 
   return filter;
@@ -124,20 +142,29 @@ exports.createExam = async (req, res) => {
 
 exports.getExams = async (req, res) => {
   try {
-    const { status, subject, search } = req.query;
-    const filter = buildFilter(req.user._id, { status, subject, search });
+    const { status, subject, priority, search, page, limit } = req.query;
+    const filter = buildFilter(req.user._id, { status, subject, priority, search });
 
     // Sort: upcoming → ASC by date; past → DESC by date; default → ASC
     const sortOrder = status === 'past' ? -1 : 1;
 
-    const exams = await Exam.find(filter).sort({ examDate: sortOrder }).lean({ virtuals: true });
+    // Pagination support
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const limitNum = limit ? Math.max(1, parseInt(limit, 10)) : 0;
+
+    let examsQuery = Exam.find(filter).sort({ examDate: sortOrder });
+    if (limitNum > 0) {
+      examsQuery = examsQuery.skip((pageNum - 1) * limitNum).limit(limitNum);
+    }
+
+    const exams = await examsQuery.lean({ virtuals: true });
 
     // Counts for UI badges
     const now = new Date();
     const weekEnd = new Date(now);
     weekEnd.setDate(now.getDate() + 7);
 
-    const [totalCount, upcomingCount, thisWeekCount] = await Promise.all([
+    const [totalCount, upcomingCount, thisWeekCount, filteredTotal] = await Promise.all([
       Exam.countDocuments({ user: req.user._id }),
       Exam.countDocuments({
         user: req.user._id,
@@ -148,6 +175,7 @@ exports.getExams = async (req, res) => {
         user: req.user._id,
         examDate: { $gte: now, $lte: weekEnd },
       }),
+      Exam.countDocuments(filter),
     ]);
 
     // Distinct subjects
@@ -158,14 +186,16 @@ exports.getExams = async (req, res) => {
       message: 'Exams fetched successfully',
       data: {
         exams,
-        total: exams.length,
-        subjects: subjects.sort(),
+        total: filteredTotal,
+        subjects: subjects.filter(Boolean).sort(),
         counts: {
           total: totalCount,
           upcoming: upcomingCount,
           thisWeek: thisWeekCount,
-          past: totalCount - upcomingCount,
+          past: Math.max(0, totalCount - upcomingCount),
         },
+        page: pageNum,
+        limit: limitNum > 0 ? limitNum : filteredTotal,
       },
     });
   } catch (err) {

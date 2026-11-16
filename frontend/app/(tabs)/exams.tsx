@@ -13,45 +13,71 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import {
+  Calendar,
+  Plus,
+  Search,
+  Tag,
+  AlertCircle,
+  Clock,
+  MapPin,
+  CheckCircle2,
+  Trash2,
+  Edit2,
+  X,
+  Target,
+  Sparkles,
+} from 'lucide-react-native';
 import { useExams } from '../../hooks/useExams';
 import ExamModal from '../../components/ExamModal';
+import { EmptyState } from '../../components/ui';
+import { Colors } from '../../constants/colors';
+import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { Exam, ExamPriority, ExamStatus, CreateExamInput, UpdateExamInput } from '../../types/exam';
 
-// ─── Theme ────────────────────────────────────────────────────────────────────
+// ─── Theme Colors ─────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0B0D12',
-  card: '#151923',
-  cardAlt: '#1C2333',
-  primary: '#8B5CF6',
-  secondary: '#22D3EE',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  border: '#374151',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
+  bg: Colors.background,
+  card: Colors.card,
+  cardAlt: Colors.cardSecondary,
+  primary: Colors.primary,
+  secondary: Colors.secondary,
+  text: Colors.text,
+  textMuted: Colors.textMuted,
+  border: Colors.border,
+  error: Colors.error,
+  warning: Colors.warning,
+  success: Colors.success,
 };
 
 const PRIORITY_COLORS: Record<ExamPriority, string> = {
-  urgent: '#EF4444',
-  high: '#F59E0B',
-  medium: '#8B5CF6',
-  low: '#10B981',
+  urgent: Colors.error,
+  high: Colors.warning,
+  medium: Colors.primary,
+  low: Colors.success,
 };
 
 const STATUS_COLORS: Record<ExamStatus, string> = {
-  upcoming: '#22D3EE',
-  'in-progress': '#F59E0B',
-  completed: '#10B981',
-  cancelled: '#6B7280',
+  upcoming: Colors.secondary,
+  'in-progress': Colors.warning,
+  completed: Colors.success,
+  cancelled: Colors.textMuted,
 };
 
-// ─── Filter tabs ──────────────────────────────────────────────────────────────
+// ─── Filter Tabs ──────────────────────────────────────────────────────────────
 const FILTER_TABS = [
   { key: '', label: 'All' },
   { key: 'upcoming', label: 'Upcoming' },
   { key: 'this-week', label: 'This Week' },
   { key: 'past', label: 'Past' },
+];
+
+const PRIORITY_TABS: { key: string; label: string; color: string }[] = [
+  { key: '', label: 'All Priorities', color: Colors.textSecondary },
+  { key: 'urgent', label: 'Urgent', color: Colors.error },
+  { key: 'high', label: 'High', color: Colors.warning },
+  { key: 'medium', label: 'Medium', color: Colors.primary },
+  { key: 'low', label: 'Low', color: Colors.success },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -74,9 +100,10 @@ const formatCountdown = (days: number): { label: string; color: string } => {
 
 const formatDate = (dateStr: string): string => {
   try {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
-      day: '2-digit',
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      weekday: 'short',
       month: 'short',
+      day: 'numeric',
       year: 'numeric',
     });
   } catch {
@@ -118,7 +145,9 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
       {/* Card header */}
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
-          <Text style={[styles.cardSubject, isPast && styles.textFaded]}>{exam.subject}</Text>
+          <View style={styles.subjectBadgeRow}>
+            <Text style={[styles.cardSubject, isPast && styles.textFaded]}>{exam.subject}</Text>
+          </View>
           <Text style={[styles.cardTitle, isPast && styles.textFaded]} numberOfLines={2}>
             {exam.examTitle}
           </Text>
@@ -131,13 +160,27 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
 
       {/* Meta row */}
       <View style={styles.metaRow}>
-        <Text style={styles.metaItem}>📅 {formatDate(exam.examDate)}</Text>
-        <Text style={styles.metaItem}>🕐 {exam.startTime}</Text>
-        <Text style={styles.metaItem}>⏱ {formatDuration(exam.durationMinutes)}</Text>
+        <View style={styles.metaItemRow}>
+          <Calendar size={13} color={C.textMuted} />
+          <Text style={styles.metaItem}>{formatDate(exam.examDate)}</Text>
+        </View>
+        {exam.startTime ? (
+          <View style={styles.metaItemRow}>
+            <Clock size={13} color={C.textMuted} />
+            <Text style={styles.metaItem}>{exam.startTime}</Text>
+          </View>
+        ) : null}
+        <View style={styles.metaItemRow}>
+          <Target size={13} color={C.textMuted} />
+          <Text style={styles.metaItem}>{formatDuration(exam.durationMinutes)}</Text>
+        </View>
       </View>
 
       {exam.location ? (
-        <Text style={styles.location}>📍 {exam.location}</Text>
+        <View style={styles.locationRow}>
+          <MapPin size={13} color={C.textMuted} />
+          <Text style={styles.location}>{exam.location}{exam.seatNumber ? ` • Seat ${exam.seatNumber}` : ''}</Text>
+        </View>
       ) : null}
 
       {/* Badges row */}
@@ -164,28 +207,28 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
         </View>
         {exam.targetScore != null && (
           <View style={[styles.badge, { backgroundColor: C.cardAlt, borderColor: C.border }]}>
-            <Text style={[styles.badgeText, { color: C.textMuted }]}>🎯 {exam.targetScore}%</Text>
+            <Text style={[styles.badgeText, { color: C.textMuted }]}>🎯 Target: {exam.targetScore}%</Text>
           </View>
         )}
       </View>
 
       {/* Syllabus progress */}
-      {exam.syllabusTopics.length > 0 && (
+      {exam.syllabusTopics && exam.syllabusTopics.length > 0 && (
         <View style={styles.progressSection}>
           <View style={styles.progressLabelRow}>
-            <Text style={styles.progressLabel}>Syllabus</Text>
-            <Text style={styles.progressPercent}>{exam.syllabusProgressPercent}%</Text>
+            <Text style={styles.progressLabel}>Syllabus Coverage</Text>
+            <Text style={styles.progressPercent}>{exam.syllabusProgressPercent ?? 0}%</Text>
           </View>
           <View style={styles.progressBar}>
             <View
               style={[
                 styles.progressFill,
                 {
-                  width: `${exam.syllabusProgressPercent}%` as `${number}%`,
+                  width: `${Math.min(100, Math.max(0, exam.syllabusProgressPercent ?? 0))}%`,
                   backgroundColor:
-                    exam.syllabusProgressPercent >= 80
+                    (exam.syllabusProgressPercent ?? 0) >= 80
                       ? C.success
-                      : exam.syllabusProgressPercent >= 50
+                      : (exam.syllabusProgressPercent ?? 0) >= 50
                       ? C.warning
                       : C.primary,
                 },
@@ -193,7 +236,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
             />
           </View>
           <Text style={styles.progressDetail}>
-            {exam.syllabusTopics.filter((t) => t.isCovered).length}/{exam.syllabusTopics.length} topics covered
+            {exam.syllabusTopics.filter((t) => t.isCovered).length}/{exam.syllabusTopics.length} topics prepared
           </Text>
         </View>
       )}
@@ -207,31 +250,15 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
 
       {/* Actions */}
       <View style={styles.cardActions}>
-        <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(exam)}>
-          <Text style={styles.editBtnText}>✏️ Edit</Text>
+        <TouchableOpacity style={styles.editBtn} onPress={() => onEdit(exam)} activeOpacity={0.8}>
+          <Edit2 size={13} color={C.secondary} />
+          <Text style={styles.editBtnText}>Edit</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(exam)}>
-          <Text style={styles.deleteBtnText}>🗑 Delete</Text>
+        <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(exam)} activeOpacity={0.8}>
+          <Trash2 size={13} color={C.error} />
+          <Text style={styles.deleteBtnText}>Delete</Text>
         </TouchableOpacity>
       </View>
-    </View>
-  );
-};
-
-// ─── Empty State ─────────────────────────────────────────────────────────────
-const EmptyState: React.FC<{ filter: string }> = ({ filter }) => {
-  const messages: Record<string, { icon: string; title: string; sub: string }> = {
-    '': { icon: '📚', title: 'No Exams Yet', sub: 'Tap + to track your first exam' },
-    upcoming: { icon: '📅', title: 'No Upcoming Exams', sub: 'All clear! Add exams to stay prepared.' },
-    'this-week': { icon: '🗓', title: 'Nothing This Week', sub: 'No exams scheduled for the next 7 days.' },
-    past: { icon: '✅', title: 'No Past Exams', sub: 'Your exam history will appear here.' },
-  };
-  const m = messages[filter] ?? messages[''];
-  return (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyIcon}>{m.icon}</Text>
-      <Text style={styles.emptyTitle}>{m.title}</Text>
-      <Text style={styles.emptySub}>{m.sub}</Text>
     </View>
   );
 };
@@ -240,33 +267,62 @@ const EmptyState: React.FC<{ filter: string }> = ({ filter }) => {
 export default function ExamsScreen() {
   const [activeTab, setActiveTab] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
 
-  const { exams, counts, subjects, loading, refreshing, error, createExam, updateExam, deleteExam, refresh, setFilters } =
-    useExams({
-      status: activeTab,
-      subject: subjectFilter,
-      search: searchQuery,
-    });
+  const {
+    exams,
+    counts,
+    subjects,
+    loading,
+    refreshing,
+    error,
+    createExam,
+    updateExam,
+    deleteExam,
+    refresh,
+    setFilters,
+  } = useExams({
+    status: activeTab,
+    subject: subjectFilter,
+    priority: priorityFilter,
+    search: searchQuery,
+  });
 
-  // Sync filters when tabs/search change
+  // Filter change handlers
   const handleTabChange = (key: string) => {
     setActiveTab(key);
-    setFilters({ status: key, subject: subjectFilter, search: searchQuery });
+    setFilters({ status: key, subject: subjectFilter, priority: priorityFilter, search: searchQuery });
   };
 
   const handleSubjectFilter = (s: string) => {
-    const next = subjectFilter === s ? '' : s;
+    const next = subjectFilter.toLowerCase() === s.toLowerCase() ? '' : s;
     setSubjectFilter(next);
-    setFilters({ status: activeTab, subject: next, search: searchQuery });
+    setFilters({ status: activeTab, subject: next, priority: priorityFilter, search: searchQuery });
+  };
+
+  const handlePriorityFilter = (p: string) => {
+    const next = priorityFilter === p ? '' : p;
+    setPriorityFilter(next);
+    setFilters({ status: activeTab, subject: subjectFilter, priority: next, search: searchQuery });
   };
 
   const handleSearch = (q: string) => {
     setSearchQuery(q);
-    setFilters({ status: activeTab, subject: subjectFilter, search: q });
+    setFilters({ status: activeTab, subject: subjectFilter, priority: priorityFilter, search: q });
   };
+
+  const handleResetFilters = () => {
+    setActiveTab('');
+    setSubjectFilter('');
+    setPriorityFilter('');
+    setSearchQuery('');
+    setFilters({ status: '', subject: '', priority: '', search: '' });
+  };
+
+  const hasActiveFilters = Boolean(activeTab || subjectFilter || priorityFilter || searchQuery.trim());
 
   const handleOpenCreate = () => {
     setEditingExam(null);
@@ -281,7 +337,7 @@ export default function ExamsScreen() {
   const handleDelete = (exam: Exam) => {
     Alert.alert(
       'Delete Exam',
-      `Delete "${exam.examTitle}"? This cannot be undone.`,
+      `Are you sure you want to delete "${exam.examTitle}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -290,8 +346,8 @@ export default function ExamsScreen() {
           onPress: async () => {
             try {
               await deleteExam(exam._id);
-            } catch {
-              Alert.alert('Error', 'Failed to delete exam. Please try again.');
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'Failed to delete exam. Please try again.');
             }
           },
         },
@@ -307,36 +363,39 @@ export default function ExamsScreen() {
     }
   };
 
-  if (loading) {
+  // Distinct subjects list with 'All'
+  const allSubjects = ['All', ...subjects.filter((s) => s.toLowerCase() !== 'all')];
+
+  if (loading && !refreshing && exams.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar style="light" />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={C.primary} />
-          <Text style={styles.loadingText}>Loading exams...</Text>
+          <Text style={styles.loadingText}>Loading exam countdowns...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="light" />
 
-      {/* Header */}
+      {/* Screen Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>📚 Exam Tracker</Text>
+          <Text style={styles.headerTitle}>Exam Countdown</Text>
           <Text style={styles.headerSub}>
             {counts.upcoming} upcoming · {counts.thisWeek} this week
           </Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={handleOpenCreate}>
-          <Text style={styles.addBtnText}>+</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={handleOpenCreate} activeOpacity={0.8}>
+          <Plus size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Stats Row */}
+      {/* Stats Metric Boxes */}
       <View style={styles.statsRow}>
         {[
           { label: 'Total', value: counts.total, color: C.text },
@@ -351,60 +410,108 @@ export default function ExamsScreen() {
         ))}
       </View>
 
-      {/* Search */}
+      {/* Search Input Bar */}
       <View style={styles.searchRow}>
+        <Search size={16} color={C.textMuted} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="🔍 Search exams..."
+          placeholder="Search exams by title, subject or notes..."
           placeholderTextColor={C.textMuted}
           value={searchQuery}
           onChangeText={handleSearch}
+          clearButtonMode="while-editing"
         />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => handleSearch('')} style={styles.clearSearchBtn}>
+            <X size={15} color={C.textMuted} />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Filter Tabs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {FILTER_TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-            onPress={() => handleTabChange(tab.key)}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {/* Status Filter Tabs */}
+      <View style={styles.tabContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContent}>
+          {FILTER_TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.tab, isActive && styles.tabActive]}
+                onPress={() => handleTabChange(tab.key)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Priority Filter Chips */}
+      <View style={styles.priorityContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.priorityContent}>
+          {PRIORITY_TABS.map((p) => {
+            const isSelected = priorityFilter === p.key;
+            return (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.priorityChip, isSelected && styles.priorityChipActive]}
+                onPress={() => handlePriorityFilter(p.key)}
+                activeOpacity={0.8}
+              >
+                {p.key ? (
+                  <View style={[styles.priorityDot, { backgroundColor: p.color }]} />
+                ) : null}
+                <Text style={[styles.priorityChipText, isSelected && styles.priorityChipTextActive]}>
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Subject Filter Chips */}
       {subjects.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
-          {subjects.map((s) => (
-            <TouchableOpacity
-              key={s}
-              style={[styles.chip, subjectFilter === s && styles.chipActive]}
-              onPress={() => handleSubjectFilter(s)}
-            >
-              <Text style={[styles.chipText, subjectFilter === s && styles.chipTextActive]}>
-                {s}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={styles.subjectSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipContent}>
+            {allSubjects.map((s) => {
+              const isSelected =
+                (s === 'All' && !subjectFilter) ||
+                subjectFilter.toLowerCase() === s.toLowerCase();
+
+              return (
+                <TouchableOpacity
+                  key={s}
+                  style={[styles.chip, isSelected && styles.chipActive]}
+                  onPress={() => handleSubjectFilter(s === 'All' ? '' : s)}
+                  activeOpacity={0.8}
+                >
+                  <Tag size={11} color={isSelected ? C.primary : C.textMuted} style={{ marginRight: 4 }} />
+                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                    {s}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       )}
 
-      {/* Error */}
+      {/* Error Banner */}
       {error ? (
         <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>⚠️ {error}</Text>
+          <AlertCircle size={16} color={C.error} />
+          <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity onPress={() => refresh()}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : null}
 
-      {/* Exam List */}
+      {/* Exam FlatList */}
       <FlatList
         data={exams}
         keyExtractor={(item) => item._id}
@@ -412,7 +519,25 @@ export default function ExamsScreen() {
           <ExamCard exam={item} onEdit={handleOpenEdit} onDelete={handleDelete} />
         )}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        ListEmptyComponent={<EmptyState filter={activeTab} />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <EmptyState
+              icon={<Calendar size={36} color={C.primary} />}
+              title={
+                hasActiveFilters
+                  ? 'No matching exams found'
+                  : 'No upcoming exams scheduled'
+              }
+              description={
+                hasActiveFilters
+                  ? 'Try clearing your active filters or searching for different keywords.'
+                  : 'Add your test dates, syllabus topics and targets to track countdowns.'
+              }
+              actionLabel={hasActiveFilters ? 'Reset Filters' : 'Add First Exam'}
+              onAction={hasActiveFilters ? handleResetFilters : handleOpenCreate}
+            />
+          </View>
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -424,12 +549,7 @@ export default function ExamsScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={handleOpenCreate}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-
-      {/* Modal */}
+      {/* Exam Modal (Create / Edit) */}
       <ExamModal
         visible={modalVisible}
         onClose={() => { setModalVisible(false); setEditingExam(null); }}
@@ -444,202 +564,403 @@ export default function ExamsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: C.textMuted, marginTop: 12, fontSize: 14 },
+  loadingText: { color: C.textMuted, marginTop: 12, fontSize: FontSize.sm },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: C.text },
-  headerSub: { fontSize: 13, color: C.textMuted, marginTop: 2 },
+  headerTitle: {
+    fontSize: FontSize.xxl,
+    fontWeight: FontWeight.bold,
+    color: C.text,
+  },
+  headerSub: {
+    fontSize: FontSize.xs,
+    color: C.textMuted,
+    marginTop: 2,
+  },
   addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
     backgroundColor: C.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  addBtnText: { color: '#fff', fontSize: 24, fontWeight: '300', lineHeight: 28 },
 
   statsRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    marginBottom: 10,
-    gap: 10,
+    gap: 8,
+    marginVertical: 10,
   },
   statBox: {
     flex: 1,
     backgroundColor: C.card,
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: Radius.md,
+    paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: C.border,
   },
-  statValue: { fontSize: 20, fontWeight: '800' },
-  statLabel: { fontSize: 10, color: C.textMuted, marginTop: 2, textTransform: 'uppercase' },
-
-  searchRow: { paddingHorizontal: 16, marginBottom: 8 },
-  searchInput: {
-    backgroundColor: C.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-    color: C.text,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
+  statValue: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  statLabel: {
+    fontSize: FontSize.xs,
+    color: C.textMuted,
+    marginTop: 2,
   },
 
-  tabRow: { flexGrow: 0, marginBottom: 8 },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: C.card,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginRight: 8,
-  },
-  tabActive: { backgroundColor: C.primary + '22', borderColor: C.primary },
-  tabText: { color: C.textMuted, fontSize: 13, fontWeight: '600' },
-  tabTextActive: { color: C.primary },
-
-  chipRow: { flexGrow: 0, marginBottom: 8 },
-  chip: {
+    marginHorizontal: 16,
+    borderRadius: Radius.md,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginBottom: 8,
+    height: 42,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: C.text,
+    fontSize: FontSize.sm,
+    paddingVertical: 6,
+  },
+  clearSearchBtn: {
+    padding: 4,
+  },
+
+  tabContainer: {
+    marginBottom: 6,
+  },
+  tabContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  tab: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
     backgroundColor: C.card,
     borderWidth: 1,
     borderColor: C.border,
-    marginRight: 8,
   },
-  chipActive: { backgroundColor: C.secondary + '22', borderColor: C.secondary },
-  chipText: { color: C.textMuted, fontSize: 12 },
-  chipTextActive: { color: C.secondary, fontWeight: '600' },
+  tabActive: {
+    backgroundColor: C.primary + '22',
+    borderColor: C.primary,
+  },
+  tabText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+    color: C.textMuted,
+  },
+  tabTextActive: {
+    color: C.primary,
+    fontWeight: FontWeight.bold,
+  },
+
+  priorityContainer: {
+    marginBottom: 6,
+  },
+  priorityContent: {
+    paddingHorizontal: 16,
+    gap: 6,
+  },
+  priorityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  priorityChipActive: {
+    borderColor: C.primary,
+    backgroundColor: C.cardAlt,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  priorityChipText: {
+    fontSize: 11,
+    color: C.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+  priorityChipTextActive: {
+    color: C.text,
+    fontWeight: FontWeight.bold,
+  },
+
+  subjectSection: {
+    marginBottom: 8,
+  },
+  chipContent: {
+    paddingHorizontal: 16,
+    gap: 6,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    backgroundColor: C.cardAlt,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  chipActive: {
+    backgroundColor: C.primary + '22',
+    borderColor: C.primary,
+  },
+  chipText: {
+    fontSize: 11,
+    color: C.textMuted,
+  },
+  chipTextActive: {
+    color: C.primary,
+    fontWeight: FontWeight.bold,
+  },
 
   errorBanner: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: C.error + '22',
+    backgroundColor: C.error + '18',
     marginHorizontal: 16,
+    borderRadius: Radius.md,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: C.error + '44',
     marginBottom: 8,
-    padding: 12,
-    borderRadius: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: C.error,
+    gap: 8,
   },
-  errorText: { color: C.error, fontSize: 13, flex: 1 },
-  retryText: { color: C.primary, fontWeight: '700', fontSize: 13 },
+  errorText: {
+    flex: 1,
+    color: C.error,
+    fontSize: FontSize.xs,
+  },
+  retryText: {
+    color: C.secondary,
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.xs,
+  },
 
-  // ─── Card ──────────────────────────────────────────────────────────────────
   card: {
     backgroundColor: C.card,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: Radius.lg,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: C.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
   },
-  cardPast: { opacity: 0.65 },
+  cardPast: {
+    opacity: 0.72,
+  },
+  textFaded: {
+    color: C.textMuted,
+  },
 
   urgentBanner: {
     backgroundColor: C.error + '22',
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: Radius.sm,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     marginBottom: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: C.error,
+    borderWidth: 1,
+    borderColor: C.error + '55',
   },
-  urgentBannerText: { color: C.error, fontSize: 13, fontWeight: '700' },
+  urgentBannerText: {
+    color: C.error,
+    fontSize: 11,
+    fontWeight: FontWeight.bold,
+  },
 
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  cardHeaderLeft: { flex: 1, marginRight: 12 },
-  cardHeaderRight: { alignItems: 'flex-end' },
-  cardSubject: { fontSize: 12, color: C.secondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: C.text },
-  countdown: { fontSize: 20, fontWeight: '800' },
-  countdownLabel: { fontSize: 10, textTransform: 'uppercase' },
-  textFaded: { color: C.textMuted },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  cardHeaderLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  subjectBadgeRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  cardSubject: {
+    fontSize: 11,
+    color: C.secondary,
+    fontWeight: FontWeight.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cardTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+    color: C.text,
+    lineHeight: 20,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
+  },
+  countdown: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  countdownLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
 
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 6 },
-  metaItem: { fontSize: 12, color: C.textMuted },
-  location: { fontSize: 12, color: C.textMuted, marginBottom: 8 },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 8,
+  },
+  metaItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaItem: {
+    fontSize: FontSize.xs,
+    color: C.textMuted,
+  },
 
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  location: {
+    fontSize: FontSize.xs,
+    color: C.textMuted,
+  },
+
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: Radius.xs,
     borderWidth: 1,
   },
-  badgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.3,
+  },
 
-  progressSection: { marginBottom: 10 },
-  progressLabelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  progressLabel: { fontSize: 12, color: C.textMuted, fontWeight: '600' },
-  progressPercent: { fontSize: 12, color: C.text, fontWeight: '700' },
-  progressBar: { height: 6, backgroundColor: C.cardAlt, borderRadius: 3, overflow: 'hidden', marginBottom: 3 },
-  progressFill: { height: '100%', borderRadius: 3 },
-  progressDetail: { fontSize: 11, color: C.textMuted },
+  progressSection: {
+    backgroundColor: C.cardAlt,
+    borderRadius: Radius.md,
+    padding: 10,
+    marginBottom: 10,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  progressLabel: {
+    fontSize: 11,
+    color: C.textMuted,
+  },
+  progressPercent: {
+    fontSize: 11,
+    color: C.text,
+    fontWeight: FontWeight.bold,
+  },
+  progressBar: {
+    height: 5,
+    backgroundColor: C.border,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: Radius.full,
+  },
+  progressDetail: {
+    fontSize: 10,
+    color: C.textMuted,
+  },
 
-  notesPreview: { fontSize: 12, color: C.textMuted, marginBottom: 10, fontStyle: 'italic' },
+  notesPreview: {
+    fontSize: FontSize.xs,
+    color: C.textMuted,
+    fontStyle: 'italic',
+    marginBottom: 10,
+  },
 
-  cardActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    paddingTop: 8,
+  },
   editBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: C.primary + '22',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    backgroundColor: C.cardAlt,
     borderWidth: 1,
-    borderColor: C.primary,
+    borderColor: C.border,
   },
-  editBtnText: { color: C.primary, fontWeight: '700', fontSize: 13 },
+  editBtnText: {
+    fontSize: FontSize.xs,
+    color: C.secondary,
+    fontWeight: FontWeight.medium,
+  },
   deleteBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
     backgroundColor: C.error + '15',
-    alignItems: 'center',
     borderWidth: 1,
-    borderColor: C.error,
+    borderColor: C.error + '44',
   },
-  deleteBtnText: { color: C.error, fontWeight: '700', fontSize: 13 },
-
-  // ─── Empty State ───────────────────────────────────────────────────────────
-  emptyState: { paddingTop: 60, alignItems: 'center' },
-  emptyIcon: { fontSize: 52, marginBottom: 14 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: C.text, marginBottom: 6 },
-  emptySub: { fontSize: 14, color: C.textMuted, textAlign: 'center', paddingHorizontal: 24 },
-
-  // ─── FAB ──────────────────────────────────────────────────────────────────
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 28,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: C.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: C.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+  deleteBtnText: {
+    fontSize: FontSize.xs,
+    color: C.error,
+    fontWeight: FontWeight.medium,
   },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: '300', lineHeight: 32 },
+
+  emptyContainer: {
+    paddingVertical: 24,
+  },
 });

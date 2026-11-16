@@ -51,6 +51,7 @@ export interface UpdateExamInput extends Partial<CreateExamInput> {
 export interface ExamFilters {
   status?: string;
   subject?: string;
+  priority?: string;
   search?: string;
 }
 

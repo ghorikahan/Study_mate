@@ -25,6 +25,7 @@ import {
   Tag,
   AlertTriangle,
   Sparkles,
+  X,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
 import { Card, Badge, EmptyState } from '../../components/ui';
@@ -35,6 +36,14 @@ import TaskModal from '../../components/TaskModal';
 
 type FilterTab = 'All' | 'Pending' | 'Completed' | 'Overdue';
 const FILTER_TABS: FilterTab[] = ['All', 'Pending', 'Completed', 'Overdue'];
+
+const PRIORITY_FILTERS = [
+  { key: 'All', label: 'All Priorities', color: Colors.textSecondary },
+  { key: 'urgent', label: 'Urgent', color: Colors.error },
+  { key: 'high', label: 'High', color: Colors.warning },
+  { key: 'medium', label: 'Medium', color: Colors.primary },
+  { key: 'low', label: 'Low', color: Colors.success },
+];
 
 const getPriorityVariant = (priority: TaskPriority): 'error' | 'warning' | 'primary' | 'neutral' => {
   switch (priority) {
@@ -103,6 +112,7 @@ export default function TasksScreen() {
 
   const [activeTab, setActiveTab] = useState<FilterTab>('All');
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
+  const [selectedPriority, setSelectedPriority] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modal state
@@ -139,7 +149,15 @@ export default function TasksScreen() {
         return false;
       }
 
-      // 3. Search Filter
+      // 3. Priority Filter
+      if (
+        selectedPriority !== 'All' &&
+        task.priority.toLowerCase() !== selectedPriority.toLowerCase()
+      ) {
+        return false;
+      }
+
+      // 4. Search Filter
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matchesTitle = task.title.toLowerCase().includes(q);
@@ -152,7 +170,21 @@ export default function TasksScreen() {
 
       return true;
     });
-  }, [tasks, activeTab, selectedSubject, searchQuery]);
+  }, [tasks, activeTab, selectedSubject, selectedPriority, searchQuery]);
+
+  const hasActiveFilters = Boolean(
+    activeTab !== 'All' ||
+    selectedSubject !== 'All' ||
+    selectedPriority !== 'All' ||
+    searchQuery.trim()
+  );
+
+  const handleResetFilters = () => {
+    setActiveTab('All');
+    setSelectedSubject('All');
+    setSelectedPriority('All');
+    setSearchQuery('');
+  };
 
   // Open modal for Create
   const handleOpenCreate = () => {
@@ -281,6 +313,11 @@ export default function TasksScreen() {
             onChangeText={setSearchQuery}
             clearButtonMode="while-editing"
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={16} color={Colors.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ── Status Filter Tabs ── */}
@@ -318,6 +355,45 @@ export default function TasksScreen() {
                   ]}
                 >
                   {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* ── Priority Filter Chips ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.filtersRow, { marginTop: Spacing.sm }]}
+        >
+          {PRIORITY_FILTERS.map((p) => {
+            const isSelected = selectedPriority.toLowerCase() === p.key.toLowerCase();
+            return (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.filterChip, isSelected && styles.filterChipActive]}
+                onPress={() => setSelectedPriority(p.key)}
+                activeOpacity={0.8}
+              >
+                {p.key !== 'All' && (
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: p.color,
+                      marginRight: 6,
+                    }}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.filterText,
+                    isSelected && styles.filterTextActive,
+                  ]}
+                >
+                  {p.label}
                 </Text>
               </TouchableOpacity>
             );
@@ -401,6 +477,8 @@ export default function TasksScreen() {
                   ? 'No matching tasks found'
                   : selectedSubject !== 'All'
                   ? `No tasks for ${selectedSubject}`
+                  : selectedPriority !== 'All'
+                  ? `No ${selectedPriority} priority tasks`
                   : activeTab === 'Overdue'
                   ? 'No overdue tasks 🎉'
                   : activeTab === 'Completed'
@@ -408,16 +486,16 @@ export default function TasksScreen() {
                   : 'No tasks yet'
               }
               description={
-                searchQuery
-                  ? 'Try searching with different keywords.'
+                hasActiveFilters
+                  ? 'Try searching with different keywords or clearing your active filters.'
                   : activeTab === 'Overdue'
                   ? 'Great job keeping up with all your deadlines!'
                   : activeTab === 'Completed'
                   ? 'Check off tasks as you finish them to track your productivity.'
                   : 'Add a new task to organize your study schedule and beat deadlines.'
               }
-              actionLabel={activeTab !== 'Overdue' ? 'Add First Task' : undefined}
-              onAction={handleOpenCreate}
+              actionLabel={hasActiveFilters ? 'Reset Filters' : 'Add First Task'}
+              onAction={hasActiveFilters ? handleResetFilters : handleOpenCreate}
             />
           </Card>
         ) : (

@@ -1,5 +1,6 @@
 const StudySession = require('../models/StudySession');
 const User = require('../models/User');
+const { escapeRegex } = require('../utils');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -176,7 +177,7 @@ exports.getStudySessions = async (req, res) => {
     const filter = { user: req.user._id };
 
     if (subject && subject.trim()) {
-      filter.subject = { $regex: subject.trim(), $options: 'i' };
+      filter.subject = { $regex: escapeRegex(subject.trim()), $options: 'i' };
     }
 
     if (sessionType && sessionType.trim()) {

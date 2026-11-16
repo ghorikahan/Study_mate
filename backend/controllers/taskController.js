@@ -2,6 +2,7 @@ const { Task } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/appError');
 const { successResponse } = require('../utils/responseHandler');
+const { escapeRegex } = require('../utils');
 
 /**
  * POST /api/tasks
@@ -107,12 +108,12 @@ const getTasks = asyncHandler(async (req, res) => {
 
   // Subject Filtering
   if (subject && subject.trim() && subject.trim().toLowerCase() !== 'all') {
-    query.subject = new RegExp(`^${subject.trim()}$`, 'i');
+    query.subject = new RegExp(`^${escapeRegex(subject.trim())}$`, 'i');
   }
 
-  // Search Filter (matches title, subject, description)
+  // Search Filter (matches title, subject, description safely)
   if (search && search.trim()) {
-    const searchRegex = new RegExp(search.trim(), 'i');
+    const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
     query.$or = [
       { title: searchRegex },
       { subject: searchRegex },

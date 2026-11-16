@@ -14,6 +14,7 @@ export const getExams = async (filters?: ExamFilters): Promise<ExamsResponse> =>
   const params: Record<string, string> = {};
   if (filters?.status) params.status = filters.status;
   if (filters?.subject) params.subject = filters.subject;
+  if (filters?.priority) params.priority = filters.priority;
   if (filters?.search) params.search = filters.search;
 
   const response = await apiClient.get<ExamsResponse>(BASE, { params });

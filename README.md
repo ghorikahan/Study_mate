@@ -99,6 +99,7 @@ StudyMate/
 │   │   ├── asyncHandler.js       # Async wrapper eliminating try/catch boilerplate
 │   │   ├── responseHandler.js    # Standardized successResponse & errorResponse helpers
 │   │   ├── jwtHelper.js          # generateToken & verifyToken helpers (JWT signing/verification)
+│   │   ├── regexHelper.js        # Safe regex escaping for special character searches (C++, brackets, etc.)
 │   │   └── index.js              # Utilities barrel export
 │   ├── .env.example              # Template for environment variables (safe, no credentials)
 │   ├── package.json              # Backend dependencies & npm scripts
@@ -114,6 +115,7 @@ StudyMate/
 │   ├── test_analytics.js         # Day 12 analytics aggregation test suite (36/36 passing)
 │   ├── test_profile_settings.js  # Day 13 profile & settings test suite (40/40 passing)
 │   ├── test_notifications.js     # Day 14 notifications & reminders test suite (31/31 passing)
+│   ├── test_refinement.js        # Day 15 integration, filter, regex safety & user isolation test suite (23/23 passing)
 │   └── test_health.js            # Standalone endpoint health test
 │
 ├── frontend/
@@ -157,9 +159,6 @@ StudyMate/
 │   │   │   ├── NotificationPreferencesModal.tsx # Push, exam, task, daily plan & sound alert switches
 │   │   │   ├── DeleteAccountModal.tsx # Irreversible danger zone modal with explicit "DELETE" confirmation
 │   │   │   └── index.ts          # Profile components barrel export
-│   │   ├── ConnectionIndicator.tsx # Live API connection pill & ping latency
-│   │   ├── DashboardHeader.tsx   # StudyMate branding & tagline
-│   │   ├── RoadmapCard.tsx       # 18-day feature tracker card
 │   │   ├── ScheduleModal.tsx     # Add & Edit Study Session modal with overlap validation, duration & color chips
 │   │   ├── StudyPlanModal.tsx    # Create & Edit Study Plan modal with input validation & presets
 │   │   ├── TaskModal.tsx         # Create & Edit Task modal with subject suggestions, date chips, priority selector
@@ -352,5 +351,6 @@ StudyMate/
 | **Day 12** | ✅ Done | Analytics & Insights Module: High-performance MongoDB aggregation APIs (GET /api/analytics/overview), continuous daily study breakdown (7d/30d/all), subject distribution with percentage & star rating breakdown, task completion rate & metrics, monthly goal tracking progress, composite productivity score (0–100), full Analytics screen with time filters, 0 TypeScript errors, 36/36 unit tests passing (217 total assertions) |
 | **Day 13** | ✅ Done | User Profile & Settings Module: Display & edit user profile (name, bio, institution, 8 curated avatar presets + custom URL), secure password change with strength scoring, study goal configurations (weekly/daily targets & focus session defaults), notification & audio alert preferences, sign-out workflow, and irreversible account deletion workflow with cascade cleanup (plans, tasks, exams, focus logs, timetable, notifications), 0 TypeScript errors, 40/40 unit tests passing (257 total assertions) |
 | **Day 14** | ✅ Done | Notifications & Reminders Module: In-app notification center, unread counter badge in home header, category filter chips (all, unread, exams, tasks, streak), mark all as read & optimistic deletion, Expo Notifications SDK 58 integration with Android notification channel (`studymate-reminders`, high importance, vibration, sound), instant test notification trigger for physical Android devices, backend notificationController & notificationRoutes with duplicate prevention via dedupKey index, auto-reminder generator for upcoming exams (≤3d), tasks due today/overdue & daily streak respecting user preferences, 0 TypeScript errors, 31/31 unit tests passing (288 total backend assertions) |
-| **Day 15** | 🔜 Up Next | Data Backup, Export & Offline Support: Export study records to JSON/CSV, cache offline data, auto-sync when online |
-| **Day 16–18** | 🔜 Scheduled | Polishing & Performance Optimization → End-to-End Testing → Production Build & Deployment |
+| **Day 15** | ✅ Done | Integration & Refinement Pass: Cross-module search & multi-filtering across study plans, tasks and exams (status, priority, subject, date & keyword search), safe regex escaping utility (`regexHelper.js`) preventing crashes with special characters (`C++`, `(Math)`, `[Chem]`), collision-safe exam search ($and+$or grouping), improved empty states with "Reset Filters" action triggers, confirmation dialogs for deletion/clear operations, removal of dead/unreferenced components (`RoadmapCard`, `DashboardHeader`, `ConnectionIndicator`) and placeholder buttons, 0 TypeScript errors, 23/23 unit test assertions passing (311 total backend assertions) |
+| **Day 16** | 🔜 Up Next | Offline Caching, Data Backup & JSON/CSV Export |
+| **Day 17–18** | 🔜 Scheduled | End-to-End Verification & Production Readiness |
