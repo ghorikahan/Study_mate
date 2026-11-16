@@ -21,7 +21,7 @@ import {
 } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
 import { FontSize, FontWeight, Spacing, Radius } from '../constants/theme';
-import { Button, Input, Card, Badge } from './ui';
+import { Button, Input } from './ui';
 import {
   StudyPlan,
   CreateStudyPlanInput,

@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { X, Clock, BookOpen, AlignLeft, Calendar, AlertCircle } from 'lucide-react-native';
 import { Colors } from '../constants/colors';

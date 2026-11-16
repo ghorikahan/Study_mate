@@ -24,13 +24,12 @@ import {
   Trash2,
   Tag,
   AlertCircle,
-  Filter,
   Sparkles,
   LayoutGrid,
   X,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
-import { Card, Badge, EmptyState, Button } from '../../components/ui';
+import { Card, Badge, EmptyState } from '../../components/ui';
 import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { useStudyPlans } from '../../hooks/useStudyPlans';
 import { StudyPlan, StudyPlanPriority, CreateStudyPlanInput } from '../../types/studyPlan';

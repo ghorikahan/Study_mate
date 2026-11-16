@@ -1,6 +1,5 @@
 import apiClient from './api';
 import {
-  Exam,
   CreateExamInput,
   UpdateExamInput,
   ExamFilters,

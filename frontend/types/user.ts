@@ -1,4 +1,4 @@
-import { User, UserPreferences } from './auth';
+import { User } from './auth';
 
 export interface UserStats {
   plansCount: number;

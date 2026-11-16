@@ -18,7 +18,6 @@ import {
   Edit2,
   Trash2,
   Clock,
-  BookOpen,
   Calendar,
   AlertCircle,
   RefreshCw,
@@ -69,12 +68,6 @@ interface SessionCardProps {
 }
 
 const SessionCard: React.FC<SessionCardProps> = ({ entry, isToday, onEdit, onDelete }) => {
-  const statusColors = {
-    scheduled: Colors.primary,
-    completed: Colors.success,
-    skipped: Colors.textMuted,
-  };
-  const statusColor = statusColors[entry.status as keyof typeof statusColors] || Colors.primary;
   const isCompleted = entry.status === 'completed';
   const isSkipped = entry.status === 'skipped';
 

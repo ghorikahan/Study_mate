@@ -8,7 +8,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -85,6 +84,21 @@ const ExamModal: React.FC<ExamModalProps> = ({ visible, onClose, onSubmit, editE
   const [formError, setFormError] = useState('');
   const [showSubjectSuggestions, setShowSubjectSuggestions] = useState(false);
 
+  const resetForm = () => {
+    setExamTitle('');
+    setSubject('');
+    setExamDate('');
+    setStartTime('09:00');
+    setDurationMinutes(180);
+    setLocation('');
+    setTargetScore('');
+    setPriority('medium');
+    setNotes('');
+    setTopics([]);
+    setNewTopic('');
+    setFormError('');
+  };
+
   // Populate form for edit mode
   useEffect(() => {
     if (editExam) {
@@ -107,21 +121,6 @@ const ExamModal: React.FC<ExamModalProps> = ({ visible, onClose, onSubmit, editE
       resetForm();
     }
   }, [editExam, visible]);
-
-  const resetForm = () => {
-    setExamTitle('');
-    setSubject('');
-    setExamDate('');
-    setStartTime('09:00');
-    setDurationMinutes(180);
-    setLocation('');
-    setTargetScore('');
-    setPriority('medium');
-    setNotes('');
-    setTopics([]);
-    setNewTopic('');
-    setFormError('');
-  };
 
   const validate = (): boolean => {
     if (!examTitle.trim()) { setFormError('Exam title is required.'); return false; }

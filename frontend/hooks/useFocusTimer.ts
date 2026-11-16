@@ -89,6 +89,22 @@ export const useFocusTimer = (initialSubject = 'General Study') => {
     }
   }, []);
 
+  // Switch mode (Pomodoro, Short Break, Long Break)
+  const switchMode = useCallback(
+    (newMode: SessionType) => {
+      clearTimer();
+      const secs = MODE_DURATIONS[newMode] || 1500;
+      setMode(newMode);
+      setDurationSeconds(secs);
+      setRemainingSeconds(secs);
+      setIsRunning(false);
+      setIsPaused(false);
+      targetEndTimeRef.current = null;
+      startTimeRef.current = null;
+    },
+    [clearTimer]
+  );
+
   // Handle completion
   const handleSessionFinished = useCallback(
     (actualSecondsStudied: number) => {
@@ -115,7 +131,7 @@ export const useFocusTimer = (initialSubject = 'General Study') => {
         switchMode('pomodoro');
       }
     },
-    [clearTimer, mode, pomodoroCycle]
+    [clearTimer, mode, pomodoroCycle, switchMode]
   );
 
   // Tick function using wall-clock sync
@@ -210,22 +226,6 @@ export const useFocusTimer = (initialSubject = 'General Study') => {
     startTimeRef.current = null;
     setRemainingSeconds(durationSeconds);
   }, [clearTimer, durationSeconds]);
-
-  // Switch mode (Pomodoro, Short Break, Long Break)
-  const switchMode = useCallback(
-    (newMode: SessionType) => {
-      clearTimer();
-      const secs = MODE_DURATIONS[newMode] || 1500;
-      setMode(newMode);
-      setDurationSeconds(secs);
-      setRemainingSeconds(secs);
-      setIsRunning(false);
-      setIsPaused(false);
-      targetEndTimeRef.current = null;
-      startTimeRef.current = null;
-    },
-    [clearTimer]
-  );
 
   // Complete early (user stops manually and wants to save study credit)
   const completeEarly = useCallback(() => {

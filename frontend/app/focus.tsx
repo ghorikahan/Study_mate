@@ -314,7 +314,7 @@ export default function FocusScreen() {
 
         {/* Today's Focus Stats */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsCardTitle}>📊 Today's Progress</Text>
+          <Text style={styles.statsCardTitle}>📊 Today&apos;s Progress</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Clock size={18} color={C.secondary} />

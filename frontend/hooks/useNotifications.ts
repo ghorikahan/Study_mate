@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NotificationItem, NotificationType } from '../types/notification';
+import { NotificationItem } from '../types/notification';
 import { notificationService } from '../services/notificationService';
 
 export type NotificationFilter =

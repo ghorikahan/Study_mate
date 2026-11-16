@@ -21,18 +21,16 @@ import {
   AlertCircle,
   Clock,
   MapPin,
-  CheckCircle2,
   Trash2,
   Edit2,
   X,
   Target,
-  Sparkles,
 } from 'lucide-react-native';
 import { useExams } from '../../hooks/useExams';
 import ExamModal from '../../components/ExamModal';
 import { EmptyState } from '../../components/ui';
 import { Colors } from '../../constants/colors';
-import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
+import { FontSize, FontWeight, Radius } from '../../constants/theme';
 import { Exam, ExamPriority, ExamStatus, CreateExamInput, UpdateExamInput } from '../../types/exam';
 
 // ─── Theme Colors ─────────────────────────────────────────────────────────────

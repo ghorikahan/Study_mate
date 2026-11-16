@@ -17,8 +17,6 @@ import {
   Clock,
   Award,
   Zap,
-  TrendingUp,
-  Target,
   Play,
   RotateCw,
 } from 'lucide-react-native';

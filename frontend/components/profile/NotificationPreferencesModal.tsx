@@ -144,7 +144,7 @@ export const NotificationPreferencesModal: React.FC<NotificationPreferencesModal
               </View>
               <View style={styles.toggleInfo}>
                 <Text style={styles.toggleTitle}>Daily Study Plan</Text>
-                <Text style={styles.toggleSub}>Morning reminder with today's scheduled tasks and study blocks</Text>
+                <Text style={styles.toggleSub}>Morning reminder with today&apos;s scheduled tasks and study blocks</Text>
               </View>
               <Switch
                 value={dailyPlanSummary}

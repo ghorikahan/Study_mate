@@ -17,7 +17,6 @@ import {
   User as UserIcon,
   GraduationCap,
   FileText,
-  Image as ImageIcon,
   Check,
   Sparkles,
 } from 'lucide-react-native';

@@ -8,13 +8,11 @@ import {
   Alert,
   Image,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   User as UserIcon,
-  Settings,
   Bell,
   Lock,
   LogOut,
@@ -23,7 +21,6 @@ import {
   CheckSquare,
   Clock,
   TrendingUp,
-  Star,
   Moon,
   BarChart3,
   Target,
@@ -115,7 +112,6 @@ export default function ProfileScreen() {
     currentStreak: 0,
     longestStreak: 0,
   });
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Fetch fresh profile and stats from backend
@@ -317,7 +313,7 @@ export default function ProfileScreen() {
           {/* Bio Callout if present */}
           {user?.bio ? (
             <View style={styles.bioBox}>
-              <Text style={styles.bioText}>"{user.bio}"</Text>
+              <Text style={styles.bioText}>&ldquo;{user.bio}&rdquo;</Text>
             </View>
           ) : null}
         </Card>

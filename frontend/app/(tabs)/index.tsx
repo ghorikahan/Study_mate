@@ -14,7 +14,6 @@ import {
   BookOpen,
   CheckSquare,
   Clock,
-  TrendingUp,
   Flame,
   Target,
   ArrowRight,
@@ -25,13 +24,12 @@ import {
   RefreshCw,
   CheckCircle2,
   Circle,
-  Award,
   LayoutGrid,
   Timer,
   Bell,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
-import { Card, Badge, EmptyState, Button } from '../../components/ui';
+import { Card, Badge, EmptyState } from '../../components/ui';
 import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboard } from '../../hooks/useDashboard';
@@ -408,7 +406,7 @@ export default function HomeScreen() {
             {/* ── Today's Tasks Section ── */}
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Today's Tasks</Text>
+                <Text style={styles.sectionTitle}>Today&apos;s Tasks</Text>
                 {summary?.tasks.todayTasks && summary.tasks.todayTasks.length > 0 && (
                   <Badge
                     label={`${summary.tasks.todayTasks.length}`}
