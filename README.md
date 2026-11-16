@@ -3,13 +3,10 @@
 > **"Plan Smart. Study Better. Achieve More."**  
 > *A full-stack, enterprise-grade mobile application and cloud backend designed for modern college students to master study routines, conquer exam schedules, maximize focus, and eliminate academic anxiety.*
 
-[![College Submission Package](https://img.shields.io/badge/Academic_Report-College_Submission_Package-8B5CF6?style=for-the-badge&logo=googledocs&logoColor=white)](docs/COLLEGE_SUBMISSION_PACKAGE.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Expo](https://img.shields.io/badge/Expo_SDK_58-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js_v22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-
-> 🎓 **Academic Evaluation**: For the comprehensive Project Report, Architecture Diagrams, Database ERDs, Presentation Slides Outline, and Examiner Demo Script, view the [docs/COLLEGE_SUBMISSION_PACKAGE.md](docs/COLLEGE_SUBMISSION_PACKAGE.md).
 
 ---
 
