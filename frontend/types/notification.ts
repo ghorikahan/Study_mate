@@ -54,3 +54,4 @@ export interface GenerateRemindersResponse {
     unreadCount: number;
   };
 }
+

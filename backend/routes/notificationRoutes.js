@@ -28,3 +28,4 @@ router.delete('/', notificationController.clearAll);
 router.post('/', notificationController.createNotification);
 
 module.exports = router;
+

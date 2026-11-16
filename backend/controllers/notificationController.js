@@ -340,3 +340,4 @@ exports.createNotification = asyncHandler(async (req, res, next) => {
     data: { notification },
   });
 });
+
