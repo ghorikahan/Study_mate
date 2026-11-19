@@ -16,7 +16,7 @@ export interface StudySession {
   createdAt: string;
   updatedAt: string;
 }
-
+ 
 export interface CreateStudySessionInput {
   subject: string;
   durationMinutes: number;
@@ -83,4 +83,3 @@ export interface StudySessionFilters {
   page?: number;
   limit?: number;
 }
-

@@ -73,4 +73,3 @@ export interface DashboardResponse {
   data: DashboardSummary;
   timestamp?: string;
 }
-

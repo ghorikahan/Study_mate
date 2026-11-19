@@ -43,7 +43,6 @@ College students routinely juggle overlapping semester exams, assignment deadlin
 - **Weekly Schedule Conflict Detection**: Validates timetable slots before saving to prevent double-booking study sessions.
 - **In-App & Device Notifications**: Schedules Android system reminders for upcoming exams and deadlines using high-importance notification channels.
 - **Multi-Tenant Cloud Backend**: Enforces strict user isolation across all CRUD APIs with zero cross-tenant data leakage.
-
 ---
 
 ## 🧩 Key Feature Modules

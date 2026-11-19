@@ -147,7 +147,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
             <Text style={[styles.cardSubject, isPast && styles.textFaded]}>{exam.subject}</Text>
           </View>
           <Text style={[styles.cardTitle, isPast && styles.textFaded]} numberOfLines={2}>
-            {exam.examTitle}
+            {exam.examTitle || (exam as any).title || 'Untitled Exam'}
           </Text>
         </View>
         <View style={styles.cardHeaderRight}>
@@ -186,21 +186,27 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
         <View
           style={[
             styles.badge,
-            { backgroundColor: PRIORITY_COLORS[exam.priority] + '22', borderColor: PRIORITY_COLORS[exam.priority] },
+            {
+              backgroundColor: (PRIORITY_COLORS[exam.priority] || '#3B82F6') + '22',
+              borderColor: PRIORITY_COLORS[exam.priority] || '#3B82F6',
+            },
           ]}
         >
-          <Text style={[styles.badgeText, { color: PRIORITY_COLORS[exam.priority] }]}>
-            {exam.priority.toUpperCase()}
+          <Text style={[styles.badgeText, { color: PRIORITY_COLORS[exam.priority] || '#3B82F6' }]}>
+            {(exam.priority || 'medium').toUpperCase()}
           </Text>
         </View>
         <View
           style={[
             styles.badge,
-            { backgroundColor: STATUS_COLORS[exam.status] + '22', borderColor: STATUS_COLORS[exam.status] },
+            {
+              backgroundColor: (STATUS_COLORS[exam.status] || '#10B981') + '22',
+              borderColor: STATUS_COLORS[exam.status] || '#10B981',
+            },
           ]}
         >
-          <Text style={[styles.badgeText, { color: STATUS_COLORS[exam.status] }]}>
-            {exam.status.toUpperCase()}
+          <Text style={[styles.badgeText, { color: STATUS_COLORS[exam.status] || '#10B981' }]}>
+            {(exam.status || 'upcoming').toUpperCase()}
           </Text>
         </View>
         {exam.targetScore != null && (
