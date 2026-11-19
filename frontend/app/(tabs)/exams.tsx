@@ -49,7 +49,7 @@ const C = {
   success: Colors.success,
 };
 
-const PRIORITY_COLORS: Record<ExamPriority, string> =   {
+const PRIORITY_COLORS: Record<ExamPriority, string> = {
   urgent: Colors.error,
   high: Colors.warning,
   medium: Colors.primary,
@@ -154,7 +154,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
         </View>
         <View style={styles.cardHeaderRight}>
           <Text style={[styles.countdown, { color: countdown.color }]}>{countdown.label}</Text>
-          <Text style={[styles.countdownLabel, { color: countdown.color }]}>remaining</Text>
+          <Text style={[styles.countdownLabel, { color: countdown.color }]}>remaining</Text>  
         </View>
       </View>
 
@@ -235,8 +235,8 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
                     (exam.syllabusProgressPercent ?? 0) >= 80
                       ? C.success
                       : (exam.syllabusProgressPercent ?? 0) >= 50
-                      ? C.warning
-                      : C.primary,
+                        ? C.warning
+                        : C.primary,
                 },
               ]}
             />

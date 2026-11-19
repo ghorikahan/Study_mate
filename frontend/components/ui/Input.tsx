@@ -19,6 +19,7 @@ interface InputProps extends TextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   onRightIconPress?: () => void;
+  rightIconAccessibilityLabel?: string;
   containerStyle?: ViewStyle;
   inputStyle?: TextStyle;
   required?: boolean;
@@ -31,6 +32,7 @@ export const Input: React.FC<InputProps> = ({
   leftIcon,
   rightIcon,
   onRightIconPress,
+  rightIconAccessibilityLabel,
   containerStyle,
   inputStyle,
   required,
@@ -67,6 +69,8 @@ export const Input: React.FC<InputProps> = ({
             style={styles.rightIcon}
             onPress={onRightIconPress}
             disabled={!onRightIconPress}
+            accessibilityLabel={rightIconAccessibilityLabel}
+            accessibilityRole="button"
           >
             {rightIcon}
           </TouchableOpacity>

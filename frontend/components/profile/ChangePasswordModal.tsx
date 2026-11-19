@@ -171,11 +171,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   onPress={() => setShowCurrent(!showCurrent)}
                   style={styles.eyeBtn}
                   activeOpacity={0.7}
+                  accessibilityLabel={showCurrent ? 'Hide password' : 'Show password'}
+                  accessibilityRole="button"
                 >
                   {showCurrent ? (
-                    <EyeOff size={18} color={Colors.textSecondary} />
+                    <Eye size={18} color={Colors.primary} />
                   ) : (
-                    <Eye size={18} color={Colors.textSecondary} />
+                    <EyeOff size={18} color={Colors.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -206,11 +208,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   onPress={() => setShowNew(!showNew)}
                   style={styles.eyeBtn}
                   activeOpacity={0.7}
+                  accessibilityLabel={showNew ? 'Hide password' : 'Show password'}
+                  accessibilityRole="button"
                 >
                   {showNew ? (
-                    <EyeOff size={18} color={Colors.textSecondary} />
+                    <Eye size={18} color={Colors.primary} />
                   ) : (
-                    <Eye size={18} color={Colors.textSecondary} />
+                    <EyeOff size={18} color={Colors.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -252,11 +256,13 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   onPress={() => setShowConfirm(!showConfirm)}
                   style={styles.eyeBtn}
                   activeOpacity={0.7}
+                  accessibilityLabel={showConfirm ? 'Hide password' : 'Show password'}
+                  accessibilityRole="button"
                 >
                   {showConfirm ? (
-                    <EyeOff size={18} color={Colors.textSecondary} />
+                    <Eye size={18} color={Colors.primary} />
                   ) : (
-                    <Eye size={18} color={Colors.textSecondary} />
+                    <EyeOff size={18} color={Colors.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>

@@ -170,12 +170,13 @@ export default function LoginScreen() {
               leftIcon={<Lock size={18} color={Colors.textMuted} />}
               rightIcon={
                 showPassword ? (
-                  <EyeOff size={18} color={Colors.textMuted} />
+                  <Eye size={18} color={Colors.primary} />
                 ) : (
-                  <Eye size={18} color={Colors.textMuted} />
+                  <EyeOff size={18} color={Colors.textMuted} />
                 )
               }
               onRightIconPress={() => setShowPassword((prev) => !prev)}
+              rightIconAccessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               error={passwordError}
             />
 
