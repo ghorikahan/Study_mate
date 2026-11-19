@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -112,16 +113,15 @@ export default function PlannerScreen() {
       if (activeTab === 'Active' && plan.status === 'completed') return false;
       if (activeTab === 'Completed' && plan.status !== 'completed') return false;
       if (activeTab === 'Today') {
-        const planDateStr = plan.date
-          ? new Date(plan.date).toISOString().split('T')[0]
-          : '';
+        const d = plan.date ? new Date(plan.date) : null;
+        const planDateStr = d && !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
         if (planDateStr !== todayStr) return false;
       }
 
       // 2. Subject filter
       if (
         selectedSubject !== 'All' &&
-        plan.subject.toLowerCase() !== selectedSubject.toLowerCase()
+        (plan.subject || '').toLowerCase() !== (selectedSubject || '').toLowerCase()
       ) {
         return false;
       }
@@ -129,7 +129,7 @@ export default function PlannerScreen() {
       // 3. Priority filter
       if (
         selectedPriority !== 'All' &&
-        plan.priority.toLowerCase() !== selectedPriority.toLowerCase()
+        (plan.priority || 'medium').toLowerCase() !== (selectedPriority || '').toLowerCase()
       ) {
         return false;
       }
@@ -140,7 +140,7 @@ export default function PlannerScreen() {
         const matchesTopic = (plan.topic || plan.title || '')
           .toLowerCase()
           .includes(query);
-        const matchesSubject = plan.subject.toLowerCase().includes(query);
+        const matchesSubject = (plan.subject || '').toLowerCase().includes(query);
         const matchesDesc = (plan.description || '')
           .toLowerCase()
           .includes(query);
@@ -190,6 +190,15 @@ export default function PlannerScreen() {
 
   // Handle delete plan with confirmation
   const handleDeletePrompt = (plan: StudyPlan) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`Are you sure you want to delete "${plan.topic || plan.title}"?`)) {
+        deletePlan(plan._id).catch((err: any) => {
+          if (typeof window !== 'undefined') window.alert(err.message || 'Could not delete plan');
+        });
+      }
+      return;
+    }
+
     Alert.alert(
       'Delete Study Plan',
       `Are you sure you want to delete "${plan.topic || plan.title}"?`,
@@ -309,7 +318,7 @@ export default function PlannerScreen() {
           contentContainerStyle={[styles.filtersRow, { marginTop: Spacing.sm }]}
         >
           {PRIORITY_FILTERS.map((p) => {
-            const isSelected = selectedPriority.toLowerCase() === p.key.toLowerCase();
+            const isSelected = (selectedPriority || '').toLowerCase() === (p.key || '').toLowerCase();
             return (
               <TouchableOpacity
                 key={p.key}
@@ -357,7 +366,7 @@ export default function PlannerScreen() {
           contentContainerStyle={styles.subjectsRow}
         >
           {allSubjects.map((subj) => {
-            const isSelected = selectedSubject.toLowerCase() === subj.toLowerCase();
+            const isSelected = (selectedSubject || '').toLowerCase() === (subj || '').toLowerCase();
             return (
               <TouchableOpacity
                 key={subj}

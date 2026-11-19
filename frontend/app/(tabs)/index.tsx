@@ -310,32 +310,32 @@ export default function HomeScreen() {
             >
               <StatCard
                 icon={<Clock size={18} color={Colors.secondary} />}
-                value={`${summary?.studyTime.todayHours ?? 0}h`}
+                value={`${summary?.studyTime?.todayHours ?? 0}h`}
                 label="Today's Study"
                 accent={Colors.secondary}
-                subtitle={`${summary?.studyTime.todayMinutes ?? 0} mins`}
+                subtitle={`${summary?.studyTime?.todayMinutes ?? 0} mins`}
               />
               <StatCard
                 icon={<CheckSquare size={18} color={Colors.success} />}
-                value={`${summary?.tasks.completed ?? 0} / ${summary?.tasks.total ?? 0}`}
+                value={`${summary?.tasks?.completed ?? 0} / ${summary?.tasks?.total ?? 0}`}
                 label="Tasks Done"
                 accent={Colors.success}
-                subtitle={`${summary?.tasks.pending ?? 0} pending`}
+                subtitle={`${summary?.tasks?.pending ?? 0} pending`}
               />
               <StatCard
                 icon={<Target size={18} color={Colors.primary} />}
-                value={`${summary?.studyTime.weeklyProgressPercent ?? 0}%`}
+                value={`${summary?.studyTime?.weeklyProgressPercent ?? 0}%`}
                 label="Weekly Goal"
                 accent={Colors.primary}
-                subtitle={`${summary?.studyTime.weekHours ?? 0}h / ${summary?.studyTime.weeklyGoalHours ?? 20}h`}
+                subtitle={`${summary?.studyTime?.weekHours ?? 0}h / ${summary?.studyTime?.weeklyGoalHours ?? 20}h`}
               />
               <StatCard
                 icon={<Calendar size={18} color={Colors.warning} />}
-                value={`${summary?.exams.totalUpcoming ?? 0}`}
+                value={`${summary?.exams?.totalUpcoming ?? 0}`}
                 label="Upcoming Exams"
                 accent={Colors.warning}
                 subtitle={
-                  summary?.exams.nextExam
+                  summary?.exams?.nextExam
                     ? `${summary.exams.nextExam.daysRemaining}d to ${summary.exams.nextExam.subject}`
                     : 'None scheduled'
                 }
@@ -343,11 +343,11 @@ export default function HomeScreen() {
             </ScrollView>
 
             {/* ── Weekly Breakdown Visualizer ── */}
-            {summary?.studyTime.weeklyBreakdown && (
+            {summary?.studyTime?.weeklyBreakdown && (
               <WeeklyChart
                 breakdown={summary.studyTime.weeklyBreakdown}
-                weeklyGoalHours={summary.studyTime.weeklyGoalHours}
-                weekHours={summary.studyTime.weekHours}
+                weeklyGoalHours={summary.studyTime?.weeklyGoalHours ?? 20}
+                weekHours={summary.studyTime?.weekHours ?? 0}
                 onViewAnalytics={() => router.push('/analytics' as any)}
               />
             )}
@@ -407,7 +407,7 @@ export default function HomeScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>Today&apos;s Tasks</Text>
-                {summary?.tasks.todayTasks && summary.tasks.todayTasks.length > 0 && (
+                {summary?.tasks?.todayTasks && summary.tasks.todayTasks.length > 0 && (
                   <Badge
                     label={`${summary.tasks.todayTasks.length}`}
                     variant="primary"
@@ -424,7 +424,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {summary?.tasks.todayTasks && summary.tasks.todayTasks.length > 0 ? (
+            {summary?.tasks?.todayTasks && summary.tasks.todayTasks.length > 0 ? (
               <View style={styles.tasksList}>
                 {summary.tasks.todayTasks.map((task: TodayTask) => (
                   <Card key={task._id} style={styles.taskCard}>
@@ -478,7 +478,7 @@ export default function HomeScreen() {
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionTitle}>Upcoming Exams</Text>
-                {summary?.exams.upcoming && summary.exams.upcoming.length > 0 && (
+                {summary?.exams?.upcoming && summary.exams.upcoming.length > 0 && (
                   <Badge
                     label={`${summary.exams.upcoming.length}`}
                     variant="warning"
@@ -495,7 +495,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {summary?.exams.upcoming && summary.exams.upcoming.length > 0 ? (
+            {summary?.exams?.upcoming && summary.exams.upcoming.length > 0 ? (
               <View style={styles.examsList}>
                 {summary.exams.upcoming.map((exam: UpcomingExam) => (
                   <Card key={exam._id} style={styles.examCard}>

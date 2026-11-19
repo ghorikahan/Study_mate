@@ -102,9 +102,9 @@ const ExamModal: React.FC<ExamModalProps> = ({ visible, onClose, onSubmit, editE
   // Populate form for edit mode
   useEffect(() => {
     if (editExam) {
-      setExamTitle(editExam.examTitle);
-      setSubject(editExam.subject);
-      setExamDate(editExam.examDate.split('T')[0]);
+      setExamTitle(editExam.examTitle || (editExam as any).title || '');
+      setSubject(editExam.subject || '');
+      setExamDate(editExam.examDate ? (typeof editExam.examDate === 'string' ? editExam.examDate.split('T')[0] : new Date(editExam.examDate).toISOString().split('T')[0]) : '');
       setStartTime(editExam.startTime || '09:00');
       setDurationMinutes(editExam.durationMinutes || 180);
       setLocation(editExam.location || '');

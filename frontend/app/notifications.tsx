@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -108,6 +109,14 @@ export default function NotificationsScreen() {
   const [testingAlert, setTestingAlert] = useState(false);
 
   const handleTestNotification = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Physical Device Feature 📱',
+        'System push notifications require Android OS channels (configured in Expo Notifications). Open StudyMate on your Android phone to receive native alerts!'
+      );
+      return;
+    }
+
     try {
       setTestingAlert(true);
       await sendTestAlert();

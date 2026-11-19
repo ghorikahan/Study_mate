@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -144,7 +145,7 @@ export default function TasksScreen() {
       // 2. Subject Filter
       if (
         selectedSubject !== 'All' &&
-        task.subject.toLowerCase() !== selectedSubject.toLowerCase()
+        (task.subject || '').toLowerCase() !== (selectedSubject || '').toLowerCase()
       ) {
         return false;
       }
@@ -152,7 +153,7 @@ export default function TasksScreen() {
       // 3. Priority Filter
       if (
         selectedPriority !== 'All' &&
-        task.priority.toLowerCase() !== selectedPriority.toLowerCase()
+        (task.priority || 'medium').toLowerCase() !== (selectedPriority || '').toLowerCase()
       ) {
         return false;
       }
@@ -160,8 +161,8 @@ export default function TasksScreen() {
       // 4. Search Filter
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(q);
-        const matchesSubject = task.subject.toLowerCase().includes(q);
+        const matchesTitle = (task.title || '').toLowerCase().includes(q);
+        const matchesSubject = (task.subject || '').toLowerCase().includes(q);
         const matchesDesc = (task.description || '').toLowerCase().includes(q);
         if (!matchesTitle && !matchesSubject && !matchesDesc) {
           return false;
@@ -209,6 +210,15 @@ export default function TasksScreen() {
 
   // Delete Confirmation Alert
   const handleDeletePrompt = (task: Task) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`Are you sure you want to delete "${task.title}"?`)) {
+        deleteTask(task._id).catch((err: any) => {
+          if (typeof window !== 'undefined') window.alert(err.message || 'Could not delete task');
+        });
+      }
+      return;
+    }
+
     Alert.alert(
       'Delete Task',
       `Are you sure you want to delete "${task.title}"?`,
@@ -368,7 +378,7 @@ export default function TasksScreen() {
           contentContainerStyle={[styles.filtersRow, { marginTop: Spacing.sm }]}
         >
           {PRIORITY_FILTERS.map((p) => {
-            const isSelected = selectedPriority.toLowerCase() === p.key.toLowerCase();
+            const isSelected = (selectedPriority || '').toLowerCase() === (p.key || '').toLowerCase();
             return (
               <TouchableOpacity
                 key={p.key}
@@ -416,7 +426,7 @@ export default function TasksScreen() {
           contentContainerStyle={styles.subjectsRow}
         >
           {allSubjects.map((subj) => {
-            const isSelected = selectedSubject.toLowerCase() === subj.toLowerCase();
+            const isSelected = (selectedSubject || '').toLowerCase() === (subj || '').toLowerCase();
             return (
               <TouchableOpacity
                 key={subj}

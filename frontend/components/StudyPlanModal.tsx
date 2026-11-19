@@ -81,9 +81,10 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
     if (initialData) {
       setSubject(initialData.subject || '');
       setTopic(initialData.topic || initialData.title || '');
+      const planDateObj = initialData.date ? new Date(initialData.date) : null;
       setDate(
-        initialData.date
-          ? new Date(initialData.date).toISOString().split('T')[0]
+        planDateObj && !isNaN(planDateObj.getTime())
+          ? planDateObj.toISOString().split('T')[0]
           : new Date().toISOString().split('T')[0]
       );
       setStartTime(initialData.startTime || '09:00 AM');

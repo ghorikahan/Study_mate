@@ -8,6 +8,7 @@ import {
   Alert,
   Image,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -196,6 +197,13 @@ export default function ProfileScreen() {
   };
 
   const handleSignOut = () => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Are you sure you want to sign out of StudyMate?')) {
+        logout().catch((err) => console.warn('Logout error:', err));
+      }
+      return;
+    }
+
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out of StudyMate?',

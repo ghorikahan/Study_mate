@@ -94,11 +94,17 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
   // Populate fields when editing
   useEffect(() => {
     if (editEntry) {
-      setSubject(editEntry.subject);
+      setSubject(editEntry.subject || '');
       setTopic(editEntry.topic || '');
-      setDate(editEntry.date.split('T')[0]);
-      setStartTime(editEntry.startTime);
-      setEndTime(editEntry.endTime);
+      setDate(
+        editEntry.date
+          ? (typeof editEntry.date === 'string'
+              ? editEntry.date.split('T')[0]
+              : new Date(editEntry.date).toISOString().split('T')[0])
+          : (initialDate || new Date().toISOString().split('T')[0])
+      );
+      setStartTime(editEntry.startTime || '09:00');
+      setEndTime(editEntry.endTime || '10:00');
       setSelectedColor(editEntry.color || '#8B5CF6');
       setNotes(editEntry.notes || '');
     } else {

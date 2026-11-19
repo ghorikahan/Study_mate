@@ -20,12 +20,13 @@ interface StudyHoursChartProps {
 
 const CHART_HEIGHT = 160;
 
-export const StudyHoursChart: React.FC<StudyHoursChartProps> = ({ data, goalHours }) => {
+export const StudyHoursChart: React.FC<StudyHoursChartProps> = ({ data = [], goalHours }) => {
+  const safeData = data || [];
   // Take last 7 items if data is longer (for clean bar spacing)
-  const displayItems = data.length > 7 ? data.slice(-7) : data;
-  const maxHours = Math.max(...displayItems.map((d) => d.hours), 4);
-  const totalHours = displayItems.reduce((acc, curr) => acc + curr.hours, 0);
-  const avgHours = Math.round((totalHours / displayItems.length) * 10) / 10;
+  const displayItems = safeData.length > 7 ? safeData.slice(-7) : safeData;
+  const maxHours = Math.max(...displayItems.map((d) => d.hours || 0), 4);
+  const totalHours = displayItems.reduce((acc, curr) => acc + (curr.hours || 0), 0);
+  const avgHours = displayItems.length > 0 ? Math.round((totalHours / displayItems.length) * 10) / 10 : 0;
 
   return (
     <View style={styles.container}>

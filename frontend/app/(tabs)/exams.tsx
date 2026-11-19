@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -48,7 +49,7 @@ const C = {
   success: Colors.success,
 };
 
-const PRIORITY_COLORS: Record<ExamPriority, string> = {
+const PRIORITY_COLORS: Record<ExamPriority, string> =   {
   urgent: Colors.error,
   high: Colors.warning,
   medium: Colors.primary,
@@ -302,7 +303,7 @@ export default function ExamsScreen() {
   };
 
   const handleSubjectFilter = (s: string) => {
-    const next = subjectFilter.toLowerCase() === s.toLowerCase() ? '' : s;
+    const next = (subjectFilter || '').toLowerCase() === (s || '').toLowerCase() ? '' : s;
     setSubjectFilter(next);
     setFilters({ status: activeTab, subject: next, priority: priorityFilter, search: searchQuery });
   };
@@ -339,9 +340,18 @@ export default function ExamsScreen() {
   };
 
   const handleDelete = (exam: Exam) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`Are you sure you want to delete "${exam.examTitle || (exam as any).title || 'this exam'}"? This action cannot be undone.`)) {
+        deleteExam(exam._id).catch((err: any) => {
+          if (typeof window !== 'undefined') window.alert(err?.message || 'Failed to delete exam. Please try again.');
+        });
+      }
+      return;
+    }
+
     Alert.alert(
       'Delete Exam',
-      `Are you sure you want to delete "${exam.examTitle}"? This action cannot be undone.`,
+      `Are you sure you want to delete "${exam.examTitle || (exam as any).title || 'this exam'}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -368,7 +378,7 @@ export default function ExamsScreen() {
   };
 
   // Distinct subjects list with 'All'
-  const allSubjects = ['All', ...subjects.filter((s) => s.toLowerCase() !== 'all')];
+  const allSubjects = ['All', ...subjects.filter((s) => s && s.toLowerCase() !== 'all')];
 
   if (loading && !refreshing && exams.length === 0) {
     return (
@@ -484,7 +494,7 @@ export default function ExamsScreen() {
             {allSubjects.map((s) => {
               const isSelected =
                 (s === 'All' && !subjectFilter) ||
-                subjectFilter.toLowerCase() === s.toLowerCase();
+                (subjectFilter || '').toLowerCase() === (s || '').toLowerCase();
 
               return (
                 <TouchableOpacity

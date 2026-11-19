@@ -78,12 +78,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setSubject(initialData.subject || '');
       if (initialData.dueDate) {
         const d = new Date(initialData.dueDate);
-        setDate(d.toISOString().split('T')[0]);
-        const hours = d.getHours();
-        const minutes = d.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const formattedHour = hours % 12 || 12;
-        setTime(`${formattedHour}:${minutes} ${ampm}`);
+        if (!isNaN(d.getTime())) {
+          setDate(d.toISOString().split('T')[0]);
+          const hours = d.getHours();
+          const minutes = d.getMinutes().toString().padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const formattedHour = hours % 12 || 12;
+          setTime(`${formattedHour}:${minutes} ${ampm}`);
+        } else {
+          setDate(new Date().toISOString().split('T')[0]);
+          setTime('11:59 PM');
+        }
       } else {
         setDate(new Date().toISOString().split('T')[0]);
         setTime('11:59 PM');
