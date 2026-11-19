@@ -110,9 +110,10 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
-const formatDuration = (minutes: number): string => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+const formatDuration = (minutes?: number): string => {
+  const mins = minutes && !isNaN(minutes) ? minutes : 180;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
   if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
 };
@@ -404,7 +405,12 @@ export default function ExamsScreen() {
             {counts.upcoming} upcoming · {counts.thisWeek} this week
           </Text>
         </View>
-        <TouchableOpacity style={styles.addBtn} onPress={handleOpenCreate} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={handleOpenCreate}
+          activeOpacity={0.8}
+          accessibilityLabel="Add Exam"
+        >
           <Plus size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </View>

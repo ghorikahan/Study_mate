@@ -262,6 +262,7 @@ export default function TasksScreen() {
           style={styles.addBtn}
           onPress={handleOpenCreate}
           activeOpacity={0.8}
+          accessibilityLabel="Add Task"
         >
           <Plus size={22} color={Colors.white} />
         </TouchableOpacity>

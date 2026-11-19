@@ -122,7 +122,7 @@ export default function RegisterScreen() {
         password,
       });
 
-      // Route guard automatically redirects authenticated user to (tabs)
+      router.replace('/(tabs)' as any);
     } catch (error) {
       const msg = extractErrorMessage(error);
       setApiError(msg);

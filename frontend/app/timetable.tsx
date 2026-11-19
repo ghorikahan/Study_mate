@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -52,10 +53,19 @@ const formatDayHeader = (dateStr: string): string => {
 };
 
 // ─── Duration label ────────────────────────────────────────────────────────────
-const formatDuration = (minutes: number): string => {
-  if (minutes < 60) return `${minutes}m`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
+const formatDuration = (minutes?: number, startTime?: string, endTime?: string): string => {
+  let mins = typeof minutes === 'number' && !isNaN(minutes) && minutes > 0 ? minutes : undefined;
+  if (mins === undefined && startTime && endTime) {
+    const [sh, sm] = startTime.split(':').map(Number);
+    const [eh, em] = endTime.split(':').map(Number);
+    if (!isNaN(sh) && !isNaN(sm) && !isNaN(eh) && !isNaN(em)) {
+      mins = Math.max(0, (eh * 60 + em) - (sh * 60 + sm));
+    }
+  }
+  if (!mins || isNaN(mins) || mins <= 0) return '60m';
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 };
 
@@ -105,7 +115,7 @@ const SessionCard: React.FC<SessionCardProps> = ({ entry, isToday, onEdit, onDel
         ) : null}
         <View style={styles.sessionMeta}>
           <Clock size={12} color={Colors.textMuted} />
-          <Text style={styles.sessionMetaText}>{formatDuration(entry.durationMinutes)}</Text>
+          <Text style={styles.sessionMetaText}>{formatDuration(entry.durationMinutes, entry.startTime, entry.endTime)}</Text>
           {isToday && entry.status === 'scheduled' && (
             <>
               <Text style={styles.sessionDot}>•</Text>
@@ -179,6 +189,15 @@ export default function TimetableScreen() {
   };
 
   const handleDelete = (entry: TimetableEntry) => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`Remove "${entry.subject}" (${entry.startTime}–${entry.endTime}) from your timetable?`)) {
+        deleteEntry(entry._id).catch((err: any) => {
+          if (typeof window !== 'undefined') window.alert(err?.response?.data?.message || 'Could not delete session');
+        });
+      }
+      return;
+    }
+
     Alert.alert(
       'Delete Session',
       `Remove "${entry.subject}" (${entry.startTime}–${entry.endTime}) from your timetable?`,
@@ -222,7 +241,11 @@ export default function TimetableScreen() {
           <Text style={styles.screenTitle}>Weekly Timetable</Text>
           <Text style={styles.screenSubtitle}>{formatWeekLabel(weekStart)}</Text>
         </View>
-        <TouchableOpacity onPress={handleOpenCreate} style={styles.addBtn}>
+        <TouchableOpacity
+          onPress={handleOpenCreate}
+          style={styles.addBtn}
+          accessibilityLabel="Add Session"
+        >
           <Plus size={22} color="#fff" />
         </TouchableOpacity>
       </View>

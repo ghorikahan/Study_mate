@@ -150,7 +150,15 @@ const getWeekEntries = asyncHandler(async (req, res) => {
     dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
       new Date(date + 'T00:00:00Z').getUTCDay()
     ],
-    totalMinutes: dayEntries.reduce((sum, e) => sum + (e.durationMinutes || 0), 0),
+    totalMinutes: dayEntries.reduce((sum, e) => {
+      let dm = e.durationMinutes;
+      if ((!dm || isNaN(dm)) && e.startTime && e.endTime) {
+        const [sh, sm] = e.startTime.split(':').map(Number);
+        const [eh, em] = e.endTime.split(':').map(Number);
+        dm = (eh * 60 + em) - (sh * 60 + sm);
+      }
+      return sum + (dm || 0);
+    }, 0),
     entryCount: dayEntries.length,
     entries: dayEntries,
   }));

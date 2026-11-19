@@ -81,7 +81,7 @@ export default function LoginScreen() {
         password,
       });
 
-      // Navigation is automatically handled by the route guard in _layout.tsx
+      router.replace('/(tabs)' as any);
     } catch (error) {
       const msg = extractErrorMessage(error);
       setApiError(msg);
