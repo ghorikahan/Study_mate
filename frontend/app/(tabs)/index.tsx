@@ -5,1106 +5,849 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  BookOpen,
-  CheckSquare,
   Clock,
   Flame,
-  Target,
-  ArrowRight,
-  GraduationCap,
-  Plus,
-  Calendar,
-  AlertCircle,
-  RefreshCw,
   CheckCircle2,
-  Circle,
-  LayoutGrid,
-  Timer,
+  Calendar,
   Bell,
+  Sparkles,
+  BookOpen,
+  ArrowRight,
+  TrendingUp,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
-import { Card, Badge, EmptyState } from '../../components/ui';
-import { FontSize, FontWeight, Spacing, Radius } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
-import { useDashboard } from '../../hooks/useDashboard';
-import { useNotifications } from '../../hooks/useNotifications';
-import { TodayTask, UpcomingExam, DailyStudyItem } from '../../types/dashboard';
 
-// ─── Greeting Helper ──────────────────────────────────────────────────────────
-const getGreeting = (name?: string): string => {
-  const hour = new Date().getHours();
-  const firstName = name ? name.split(' ')[0] : 'Scholar';
-  if (hour < 12) return `Good morning, ${firstName} ☀️`;
-  if (hour < 17) return `Good afternoon, ${firstName} 🌤️`;
-  return `Good evening, ${firstName} 🌙`;
+// ─── Theme Colors Reference ──────────────────────────────────────────────────
+const COLORS = Colors;
+
+// ─── Circular Progress Component (75% Ring in Pure React Native) ──────────────
+interface CircularProgressProps {
+  percentage: number;
+  size?: number;
+  strokeWidth?: number;
+}
+
+const CircularProgress: React.FC<CircularProgressProps> = ({
+  percentage,
+  size = 84,
+  strokeWidth = 7,
+}) => {
+  const innerSize = size - strokeWidth * 2;
+
+  return (
+    <View style={[styles.progressRingContainer, { width: size, height: size }]}>
+      {/* Inactive Track Ring */}
+      <View
+        style={[
+          styles.progressTrackRing,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: strokeWidth,
+            borderColor: COLORS.progressTrack,
+          },
+        ]}
+      />
+
+      {/* Active 75% Arc Ring (3 of 4 borders colored in cobalt/light cobalt) */}
+      <View
+        style={[
+          styles.progressActiveRing,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: strokeWidth,
+            borderTopColor: COLORS.secondary,
+            borderRightColor: COLORS.secondary,
+            borderBottomColor: COLORS.primary,
+            borderLeftColor: 'transparent',
+            transform: [{ rotate: '-45deg' }],
+          },
+        ]}
+      />
+
+      {/* Inner Center Content with Platinum Percentage */}
+      <View
+        style={[
+          styles.progressRingCenter,
+          {
+            width: innerSize,
+            height: innerSize,
+            borderRadius: innerSize / 2,
+            backgroundColor: COLORS.card,
+          },
+        ]}
+      >
+        <Text style={styles.progressPercentText}>{percentage}%</Text>
+      </View>
+    </View>
+  );
 };
 
-// ─── Format Date Helper ───────────────────────────────────────────────────────
-const formatDisplayDate = (): string => {
+// ─── Formatted Date Helper ───────────────────────────────────────────────────
+const getFormattedDate = (): string => {
   return new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
-  });
+  }).toUpperCase();
 };
 
-// ─── Priority Badge Color Helper ──────────────────────────────────────────────
-const getPriorityVariant = (priority: string): 'error' | 'warning' | 'primary' | 'neutral' => {
-  switch (priority) {
-    case 'urgent':
-      return 'error';
-    case 'high':
-      return 'warning';
-    case 'medium':
-      return 'primary';
-    default:
-      return 'neutral';
-  }
-};
-
-// ─── Stat Card Component ──────────────────────────────────────────────────────
-interface StatCardProps {
-  icon: React.ReactNode;
-  value: string;
-  label: string;
-  accent: string;
-  subtitle?: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ icon, value, label, accent, subtitle }) => (
-  <View style={[styles.statCard, { borderLeftColor: accent }]}>
-    <View style={[styles.statIcon, { backgroundColor: `${accent}18` }]}>{icon}</View>
-    <Text style={[styles.statValue, { color: accent }]}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-    {subtitle && <Text style={styles.statSub}>{subtitle}</Text>}
-  </View>
-);
-
-// ─── Quick Action Component ───────────────────────────────────────────────────
-interface QuickActionProps {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  onPress: () => void;
-}
-
-const QuickAction: React.FC<QuickActionProps> = ({ icon, label, color, onPress }) => (
-  <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.8}>
-    <View style={[styles.quickActionIcon, { backgroundColor: `${color}18` }]}>{icon}</View>
-    <Text style={styles.quickActionLabel}>{label}</Text>
-  </TouchableOpacity>
-);
-
-// ─── Weekly Breakdown Chart Component ─────────────────────────────────────────
-interface WeeklyChartProps {
-  breakdown: DailyStudyItem[];
-  weeklyGoalHours: number;
-  weekHours: number;
-  onViewAnalytics?: () => void;
-}
-
-const WeeklyChart: React.FC<WeeklyChartProps> = ({
-  breakdown,
-  weeklyGoalHours,
-  weekHours,
-  onViewAnalytics,
-}) => {
-  // Find max hours for scaling bars
-  const maxHours = Math.max(...breakdown.map((b) => b.hours), 3);
-
-  return (
-    <Card style={styles.chartCard}>
-      <View style={styles.chartHeader}>
-        <View>
-          <Text style={styles.chartTitle}>Weekly Study Activity</Text>
-          <Text style={styles.chartSubtitle}>
-            {weekHours}h studied of {weeklyGoalHours}h weekly goal
-          </Text>
-        </View>
-        <Badge
-          label={`${Math.min(100, Math.round((weekHours / (weeklyGoalHours || 1)) * 100))}% goal`}
-          variant={weekHours >= weeklyGoalHours ? 'success' : 'primary'}
-          dot
-        />
-      </View>
-
-      <View style={styles.barsContainer}>
-        {breakdown.map((item, index) => {
-          const barHeightPercent = Math.max(10, Math.round((item.hours / maxHours) * 80));
-          return (
-            <View key={index} style={styles.barColumn}>
-              <Text style={styles.barValueText}>
-                {item.hours > 0 ? `${item.hours}h` : ''}
-              </Text>
-              <View style={styles.barTrack}>
-                <View
-                  style={[
-                    styles.barFill,
-                    {
-                      height: `${barHeightPercent}%`,
-                      backgroundColor: item.isToday
-                        ? Colors.primary
-                        : item.hours > 0
-                        ? Colors.secondary
-                        : Colors.cardSecondary,
-                    },
-                  ]}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.barDayLabel,
-                  item.isToday && styles.barDayLabelToday,
-                ]}
-              >
-                {item.day}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      {onViewAnalytics && (
-        <TouchableOpacity
-          style={styles.viewAnalyticsLink}
-          onPress={onViewAnalytics}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.viewAnalyticsLinkText}>View Full Analytics & Insights</Text>
-          <ArrowRight size={13} color={Colors.primary} />
-        </TouchableOpacity>
-      )}
-    </Card>
-  );
-};
-
-// ─── Main Screen Component ────────────────────────────────────────────────────
+// ─── Main Graphite + Platinum + Cobalt Dashboard Screen ───────────────────────
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { summary, loading, refreshing, error, refresh, refetch } = useDashboard();
-  const { unreadCount } = useNotifications();
-
-  const rawStreak = summary?.user.studyStreak ?? user?.studyStreak ?? 0;
-  const streak: number =
-    typeof rawStreak === 'number'
-      ? rawStreak
-      : (rawStreak as any)?.currentStreak ?? 0;
-  const userName = summary?.user.name || user?.name || 'Student';
+  const displayName = user?.name ? user.name.split(' ')[0] : 'Alex';
+  const initial = (displayName[0] || 'A').toUpperCase();
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="light-content" />
+
       <ScrollView
-        style={styles.scroll}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={refresh}
-            tintColor={Colors.primary}
-            colors={[Colors.primary, Colors.secondary]}
-          />
-        }
       >
-        {/* ── Greeting Header ── */}
-        <View style={styles.greetingSection}>
-          <View style={styles.greetingLeft}>
-            <Text style={styles.dateText}>{formatDisplayDate()}</Text>
-            <Text style={styles.greetingText}>{getGreeting(userName)}</Text>
-            <Text style={styles.greetingSubtext}>
-              Plan Smart. Study Better. Achieve More.
-            </Text>
+        {/* ── 1. Welcome Header ── */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerDate}>{getFormattedDate()}</Text>
+            <Text style={styles.headerGreeting}>Good evening, {displayName}</Text>
+            <Text style={styles.headerSubtitle}>Ready to make today productive?</Text>
           </View>
-          <View style={styles.headerRightGroup}>
+
+          <View style={styles.headerRight}>
             <TouchableOpacity
-              style={styles.bellBtn}
+              style={styles.bellButton}
+              activeOpacity={0.7}
               onPress={() => router.push('/notifications' as any)}
-              activeOpacity={0.8}
             >
-              <Bell size={20} color={Colors.text} />
-              {unreadCount > 0 && (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadBadgeText}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Text>
-                </View>
-              )}
+              <Bell size={19} color={COLORS.secondaryText} />
+              <View style={styles.bellNotificationDot} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.avatarWrapper}
-              onPress={() => router.push('/(tabs)/profile' as any)}
+              style={styles.avatarButton}
               activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/profile' as any)}
             >
-              <GraduationCap size={24} color={Colors.primary} />
-              {streak > 0 && (
-                <View style={styles.avatarStreakPill}>
-                  <Flame size={10} color={Colors.warning} />
-                  <Text style={styles.avatarStreakText}>{streak}</Text>
-                </View>
-              )}
+              <View style={styles.avatarInner}>
+                <Text style={styles.avatarText}>{initial}</Text>
+              </View>
+              <View style={styles.avatarStatusDot} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Error Banner (if fetch failed) ── */}
-        {error && (
-          <Card style={styles.errorCard}>
-            <View style={styles.errorInner}>
-              <AlertCircle size={20} color={Colors.error} />
-              <View style={styles.errorTextCol}>
-                <Text style={styles.errorTitle}>Could not load live dashboard</Text>
-                <Text style={styles.errorDesc}>{error}</Text>
-              </View>
-              <TouchableOpacity style={styles.retryBtn} onPress={refetch}>
-                <RefreshCw size={16} color={Colors.primary} />
-              </TouchableOpacity>
+        {/* ── 2. Daily Learning Progress ── */}
+        <View style={styles.dailyProgressCard}>
+          <View style={styles.dailyProgressLeft}>
+            <View style={styles.progressPillBadge}>
+              <Sparkles size={12} color={COLORS.secondary} />
+              <Text style={styles.progressPillText}>YOUR DAILY PROGRESS</Text>
             </View>
-          </Card>
-        )}
 
-        {/* ── Loading Skeleton / State ── */}
-        {loading && !refreshing && !summary ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.loadingText}>Calculating your study statistics...</Text>
+            <Text style={styles.dailyProgressTitle}>3 of 4 tasks completed</Text>
+            <Text style={styles.dailyProgressSubtitle}>
+              You&apos;re making great progress!
+            </Text>
+
+            {/* Horizontal Progress Track */}
+            <View style={styles.linearTrack}>
+              <View style={[styles.linearFill, { width: '75%' }]} />
+            </View>
           </View>
-        ) : (
-          <>
-            {/* ── Streak Highlight Banner ── */}
-            <View style={styles.streakBanner}>
-              <View style={styles.streakLeft}>
-                <View style={styles.streakFlameIcon}>
-                  <Flame size={20} color={Colors.warning} />
-                </View>
-                <View>
-                  <Text style={styles.streakTitle}>
-                    {streak > 0 ? `${streak} Day Study Streak!` : 'Start Your Study Streak!'}
-                  </Text>
-                  <Text style={styles.streakSub}>
-                    {streak > 0
-                      ? 'Consistency is the key to academic mastery.'
-                      : 'Complete a study session or task today to ignite your streak.'}
-                  </Text>
-                </View>
-              </View>
-              <Badge
-                label={streak > 0 ? 'Active' : 'Get Started'}
-                variant={streak > 0 ? 'warning' : 'primary'}
-                dot={streak > 0}
-              />
+
+          <View style={styles.dailyProgressRight}>
+            <CircularProgress percentage={75} size={84} strokeWidth={7} />
+          </View>
+        </View>
+
+        {/* ── 3. Study Statistics ── */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Study Statistics</Text>
+          <View style={styles.realtimePill}>
+            <TrendingUp size={12} color={COLORS.secondary} />
+            <Text style={styles.realtimePillText}>Today</Text>
+          </View>
+        </View>
+
+        <View style={styles.statsRow}>
+          {/* Stat 1: Study Time */}
+          <View style={styles.statCard}>
+            <View style={[styles.statIconWrapper, { backgroundColor: `${COLORS.secondary}16` }]}>
+              <Clock size={18} color={COLORS.secondary} />
             </View>
+            <Text style={styles.statValue}>4h 25m</Text>
+            <Text style={styles.statLabel}>Study Time</Text>
+          </View>
 
-            {/* ── Statistics Row ── */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.statsRow}
-            >
-              <StatCard
-                icon={<Clock size={18} color={Colors.secondary} />}
-                value={`${summary?.studyTime?.todayHours ?? 0}h`}
-                label="Today's Study"
-                accent={Colors.secondary}
-                subtitle={`${summary?.studyTime?.todayMinutes ?? 0} mins`}
-              />
-              <StatCard
-                icon={<CheckSquare size={18} color={Colors.success} />}
-                value={`${summary?.tasks?.completed ?? 0} / ${summary?.tasks?.total ?? 0}`}
-                label="Tasks Done"
-                accent={Colors.success}
-                subtitle={`${summary?.tasks?.pending ?? 0} pending`}
-              />
-              <StatCard
-                icon={<Target size={18} color={Colors.primary} />}
-                value={`${summary?.studyTime?.weeklyProgressPercent ?? 0}%`}
-                label="Weekly Goal"
-                accent={Colors.primary}
-                subtitle={`${summary?.studyTime?.weekHours ?? 0}h / ${summary?.studyTime?.weeklyGoalHours ?? 20}h`}
-              />
-              <StatCard
-                icon={<Calendar size={18} color={Colors.warning} />}
-                value={`${summary?.exams?.totalUpcoming ?? 0}`}
-                label="Upcoming Exams"
-                accent={Colors.warning}
-                subtitle={
-                  summary?.exams?.nextExam
-                    ? `${summary.exams.nextExam.daysRemaining}d to ${summary.exams.nextExam.subject}`
-                    : 'None scheduled'
-                }
-              />
-            </ScrollView>
+          {/* Stat 2: Tasks Completed */}
+          <View style={styles.statCard}>
+            <View style={[styles.statIconWrapper, { backgroundColor: `${COLORS.success}16` }]}>
+              <CheckCircle2 size={18} color={COLORS.success} />
+            </View>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Tasks Done</Text>
+          </View>
 
-            {/* ── Weekly Breakdown Visualizer ── */}
-            {summary?.studyTime?.weeklyBreakdown && (
-              <WeeklyChart
-                breakdown={summary.studyTime.weeklyBreakdown}
-                weeklyGoalHours={summary.studyTime?.weeklyGoalHours ?? 20}
-                weekHours={summary.studyTime?.weekHours ?? 0}
-                onViewAnalytics={() => router.push('/analytics' as any)}
-              />
-            )}
+          {/* Stat 3: Current Streak */}
+          <View style={styles.statCard}>
+            <View style={[styles.statIconWrapper, { backgroundColor: `${COLORS.warning}16` }]}>
+              <Flame size={18} color={COLORS.warning} />
+            </View>
+            <Text style={styles.statValue}>7 days</Text>
+            <Text style={styles.statLabel}>Current Streak</Text>
+          </View>
+        </View>
 
-            {/* ── Focus Timer Hero Banner ── */}
-            <TouchableOpacity
-              style={styles.focusBanner}
-              onPress={() => router.push('/focus' as any)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.focusBannerLeft}>
-                <View style={styles.focusIconBg}>
-                  <Timer size={22} color={Colors.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.focusBannerTitle}>Focus Timer (Pomodoro)</Text>
-                  <Text style={styles.focusBannerSub}>Start 25m focus session with break cycles</Text>
+        {/* ── 4. Today's Study Schedule ── */}
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionTitleWithCount}>
+            <Text style={styles.sectionTitle}>Today&apos;s Schedule</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>4 sessions</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.viewAllBtn}
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/planner' as any)}
+          >
+            <Text style={styles.viewAllText}>View All</Text>
+            <ArrowRight size={13} color={COLORS.secondary} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.scheduleList}>
+          {/* Session 1: Mathematics */}
+          <TouchableOpacity
+            style={[styles.scheduleCard, { borderLeftColor: COLORS.primary }]}
+            activeOpacity={0.8}
+            onPress={() => router.push('/timetable' as any)}
+          >
+            <View style={styles.scheduleTimeCol}>
+              <Text style={[styles.scheduleTimeText, { color: COLORS.secondary }]}>09:00 AM</Text>
+              <Text style={styles.scheduleDurationText}>90 min</Text>
+            </View>
+            <View style={styles.scheduleDivider} />
+            <View style={styles.scheduleDetailsCol}>
+              <View style={styles.scheduleSubjectRow}>
+                <Text style={styles.scheduleSubjectTitle}>Mathematics</Text>
+                <View style={[styles.statusBadge, { backgroundColor: `${COLORS.success}16` }]}>
+                  <Text style={[styles.statusBadgeText, { color: COLORS.success }]}>Completed</Text>
                 </View>
               </View>
-              <View style={styles.focusBannerBtn}>
-                <Text style={styles.focusBannerBtnText}>Start ▶</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* ── Quick Actions Grid ── */}
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <Text style={styles.scheduleTopicText}>Calculus: Integration & Vector Fields</Text>
             </View>
-            <View style={styles.quickActionsGrid}>
-              <QuickAction
-                icon={<Plus size={20} color={Colors.primary} />}
-                label="Add Task"
-                color={Colors.primary}
-                onPress={() => router.push('/(tabs)/tasks' as any)}
-              />
-              <QuickAction
-                icon={<BookOpen size={20} color={Colors.secondary} />}
-                label="Planner"
-                color={Colors.secondary}
-                onPress={() => router.push('/(tabs)/planner' as any)}
-              />
-              <QuickAction
-                icon={<LayoutGrid size={20} color={Colors.success} />}
-                label="Timetable"
-                color={Colors.success}
-                onPress={() => router.push('/timetable' as any)}
-              />
-              <QuickAction
-                icon={<Calendar size={20} color={Colors.warning} />}
-                label="Exams"
-                color={Colors.warning}
-                onPress={() => router.push('/(tabs)/exams' as any)}
-              />
+          </TouchableOpacity>
+
+          {/* Session 2: Data Structures */}
+          <TouchableOpacity
+            style={[styles.scheduleCard, { borderLeftColor: COLORS.secondary }]}
+            activeOpacity={0.8}
+            onPress={() => router.push('/timetable' as any)}
+          >
+            <View style={styles.scheduleTimeCol}>
+              <Text style={[styles.scheduleTimeText, { color: COLORS.secondary }]}>11:00 AM</Text>
+              <Text style={styles.scheduleDurationText}>75 min</Text>
             </View>
-
-            {/* ── Today's Tasks Section ── */}
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Today&apos;s Tasks</Text>
-                {summary?.tasks?.todayTasks && summary.tasks.todayTasks.length > 0 && (
-                  <Badge
-                    label={`${summary.tasks.todayTasks.length}`}
-                    variant="primary"
-                  />
-                )}
+            <View style={styles.scheduleDivider} />
+            <View style={styles.scheduleDetailsCol}>
+              <View style={styles.scheduleSubjectRow}>
+                <Text style={styles.scheduleSubjectTitle}>Data Structures</Text>
+                <View style={[styles.statusBadge, { backgroundColor: `${COLORS.success}16` }]}>
+                  <Text style={[styles.statusBadgeText, { color: COLORS.success }]}>Completed</Text>
+                </View>
               </View>
-              <TouchableOpacity
-                style={styles.seeAll}
-                onPress={() => router.push('/(tabs)/tasks' as any)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.seeAllText}>View all</Text>
-                <ArrowRight size={14} color={Colors.primary} />
-              </TouchableOpacity>
+              <Text style={styles.scheduleTopicText}>Binary Search Trees & Traversal</Text>
             </View>
+          </TouchableOpacity>
 
-            {summary?.tasks?.todayTasks && summary.tasks.todayTasks.length > 0 ? (
-              <View style={styles.tasksList}>
-                {summary.tasks.todayTasks.map((task: TodayTask) => (
-                  <Card key={task._id} style={styles.taskCard}>
-                    <View style={styles.taskRow}>
-                      <View style={styles.taskCheckIcon}>
-                        {task.status === 'completed' ? (
-                          <CheckCircle2 size={20} color={Colors.success} />
-                        ) : (
-                          <Circle size={20} color={Colors.textMuted} />
-                        )}
-                      </View>
-                      <View style={styles.taskInfo}>
-                        <Text
-                          style={[
-                            styles.taskTitle,
-                            task.status === 'completed' && styles.taskTitleCompleted,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {task.title}
-                        </Text>
-                        <View style={styles.taskMeta}>
-                          <Text style={styles.taskSubject}>{task.subject}</Text>
-                          <Text style={styles.taskBullet}>•</Text>
-                          <Text style={styles.taskDuration}>
-                            {task.estimatedMinutes} mins
-                          </Text>
-                        </View>
-                      </View>
-                      <Badge
-                        label={task.priority}
-                        variant={getPriorityVariant(task.priority)}
-                      />
-                    </View>
-                  </Card>
-                ))}
+          {/* Session 3: Database Management */}
+          <TouchableOpacity
+            style={[styles.scheduleCard, { borderLeftColor: COLORS.primary }]}
+            activeOpacity={0.8}
+            onPress={() => router.push('/timetable' as any)}
+          >
+            <View style={styles.scheduleTimeCol}>
+              <Text style={[styles.scheduleTimeText, { color: COLORS.primary }]}>02:00 PM</Text>
+              <Text style={styles.scheduleDurationText}>60 min</Text>
+            </View>
+            <View style={styles.scheduleDivider} />
+            <View style={styles.scheduleDetailsCol}>
+              <View style={styles.scheduleSubjectRow}>
+                <Text style={styles.scheduleSubjectTitle}>Database Management</Text>
+                <View style={[styles.statusBadge, { backgroundColor: `${COLORS.success}16` }]}>
+                  <Text style={[styles.statusBadgeText, { color: COLORS.success }]}>Completed</Text>
+                </View>
               </View>
-            ) : (
-              <Card style={styles.emptyCard}>
-                <EmptyState
-                  icon={<CheckSquare size={38} color={Colors.primary} />}
-                  title="No tasks scheduled for today"
-                  description="You are all caught up! Add a new task to organize your study agenda."
-                  actionLabel="Add Task"
-                  onAction={() => router.push('/(tabs)/tasks' as any)}
-                />
-              </Card>
-            )}
+              <Text style={styles.scheduleTopicText}>Relational Algebra & Normalization</Text>
+            </View>
+          </TouchableOpacity>
 
-            {/* ── Upcoming Exams Section ── */}
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Text style={styles.sectionTitle}>Upcoming Exams</Text>
-                {summary?.exams?.upcoming && summary.exams.upcoming.length > 0 && (
-                  <Badge
-                    label={`${summary.exams.upcoming.length}`}
-                    variant="warning"
-                  />
-                )}
+          {/* Session 4: React Native */}
+          <TouchableOpacity
+            style={[styles.scheduleCard, { borderLeftColor: COLORS.accent }]}
+            activeOpacity={0.8}
+            onPress={() => router.push('/timetable' as any)}
+          >
+            <View style={styles.scheduleTimeCol}>
+              <Text style={[styles.scheduleTimeText, { color: COLORS.accent }]}>04:00 PM</Text>
+              <Text style={styles.scheduleDurationText}>60 min</Text>
+            </View>
+            <View style={styles.scheduleDivider} />
+            <View style={styles.scheduleDetailsCol}>
+              <View style={styles.scheduleSubjectRow}>
+                <Text style={styles.scheduleSubjectTitle}>React Native</Text>
+                <View style={[styles.statusBadge, { backgroundColor: `${COLORS.secondary}16` }]}>
+                  <Text style={[styles.statusBadgeText, { color: COLORS.secondary }]}>Upcoming</Text>
+                </View>
               </View>
-              <TouchableOpacity
-                style={styles.seeAll}
-                onPress={() => router.push('/(tabs)/exams' as any)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.seeAllText}>View all</Text>
-                <ArrowRight size={14} color={Colors.primary} />
-              </TouchableOpacity>
+              <Text style={styles.scheduleTopicText}>Component Architecture & Hooks</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── 5. Upcoming Examinations ── */}
+        <View style={styles.sectionHeaderRow}>
+          <View style={styles.sectionTitleWithCount}>
+            <Text style={styles.sectionTitle}>Upcoming Examinations</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>2 scheduled</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.examsList}>
+          {/* Exam 1: Data Structures */}
+          <TouchableOpacity
+            style={styles.examCard}
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/exams' as any)}
+          >
+            <View style={styles.examHeaderRow}>
+              <View style={styles.examIconAndInfo}>
+                <View style={[styles.examIconBox, { backgroundColor: `${COLORS.secondary}16` }]}>
+                  <BookOpen size={18} color={COLORS.secondary} />
+                </View>
+                <View style={styles.examTitleWrap}>
+                  <Text style={styles.examSubjectTitle}>Data Structures</Text>
+                  <Text style={styles.examSubtitle}>Midterm Examination • Theory & Algorithms</Text>
+                </View>
+              </View>
+
+              <View style={[styles.countdownPill, { borderColor: `${COLORS.accent}40` }]}>
+                <Text style={[styles.countdownValue, { color: COLORS.accent }]}>5</Text>
+                <Text style={styles.countdownLabel}>days left</Text>
+              </View>
             </View>
 
-            {summary?.exams?.upcoming && summary.exams.upcoming.length > 0 ? (
-              <View style={styles.examsList}>
-                {summary.exams.upcoming.map((exam: UpcomingExam) => (
-                  <Card key={exam._id} style={styles.examCard}>
-                    <View style={styles.examRow}>
-                      <View style={styles.examIconWrapper}>
-                        <BookOpen size={20} color={Colors.warning} />
-                      </View>
-                      <View style={styles.examInfo}>
-                        <Text style={styles.examTitle} numberOfLines={1}>
-                          {exam.examTitle}
-                        </Text>
-                        <Text style={styles.examSubject}>
-                          {exam.subject} • {new Date(exam.examDate).toLocaleDateString()}
-                        </Text>
-                        {/* Syllabus progress bar */}
-                        <View style={styles.syllabusProgressTrack}>
-                          <View
-                            style={[
-                              styles.syllabusProgressBar,
-                              { width: `${exam.syllabusProgressPercent}%` },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.syllabusProgressText}>
-                          {exam.syllabusProgressPercent}% syllabus covered
-                        </Text>
-                      </View>
-                      <View style={styles.countdownPill}>
-                        <Text style={styles.countdownNumber}>
-                          {exam.daysRemaining}
-                        </Text>
-                        <Text style={styles.countdownUnit}>
-                          {exam.daysRemaining === 1 ? 'day' : 'days'}
-                        </Text>
-                      </View>
-                    </View>
-                  </Card>
-                ))}
+            <View style={styles.examFooterRow}>
+              <View style={styles.examDateTag}>
+                <Calendar size={13} color={COLORS.secondaryText} />
+                <Text style={styles.examDateText}>Nov 24 • 10:00 AM</Text>
               </View>
-            ) : (
-              <Card style={styles.emptyCard}>
-                <EmptyState
-                  icon={<BookOpen size={38} color={Colors.warning} />}
-                  title="No upcoming exams"
-                  description="Stay prepared and eliminate exam surprises by scheduling your upcoming midterms and finals."
-                  actionLabel="Schedule Exam"
-                  onAction={() => router.push('/(tabs)/exams' as any)}
-                />
-              </Card>
-            )}
+              <View style={styles.examSyllabusRow}>
+                <Text style={styles.examSyllabusPercent}>80% syllabus prepared</Text>
+                <ArrowRight size={14} color={COLORS.secondary} />
+              </View>
+            </View>
+          </TouchableOpacity>
 
-            <View style={styles.bottomPad} />
-          </>
-        )}
+          {/* Exam 2: Database Management */}
+          <TouchableOpacity
+            style={styles.examCard}
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/exams' as any)}
+          >
+            <View style={styles.examHeaderRow}>
+              <View style={styles.examIconAndInfo}>
+                <View style={[styles.examIconBox, { backgroundColor: `${COLORS.primary}16` }]}>
+                  <BookOpen size={18} color={COLORS.secondary} />
+                </View>
+                <View style={styles.examTitleWrap}>
+                  <Text style={styles.examSubjectTitle}>Database Management</Text>
+                  <Text style={styles.examSubtitle}>Comprehensive Practical • SQL & Design</Text>
+                </View>
+              </View>
+
+              <View style={[styles.countdownPill, { borderColor: `${COLORS.accent}40` }]}>
+                <Text style={[styles.countdownValue, { color: COLORS.accent }]}>12</Text>
+                <Text style={styles.countdownLabel}>days left</Text>
+              </View>
+            </View>
+
+            <View style={styles.examFooterRow}>
+              <View style={styles.examDateTag}>
+                <Calendar size={13} color={COLORS.secondaryText} />
+                <Text style={styles.examDateText}>Dec 01 • 02:00 PM</Text>
+              </View>
+              <View style={styles.examSyllabusRow}>
+                <Text style={styles.examSyllabusPercent}>55% syllabus prepared</Text>
+                <ArrowRight size={14} color={COLORS.secondary} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Bottom space padding to accommodate bottom tab bar comfortably */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ─── Stylesheet ───────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: Spacing.base },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
 
-  // Greeting
-  greetingSection: {
+  // Header
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingTop: Spacing.base,
-    paddingBottom: Spacing.md,
+    marginBottom: 20,
   },
-  greetingLeft: { flex: 1 },
-  dateText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+  headerLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  headerDate: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     marginBottom: 4,
   },
-  greetingText: {
-    color: Colors.text,
-    fontSize: FontSize.xxl,
-    fontWeight: FontWeight.bold,
+  headerGreeting: {
+    color: COLORS.text,
+    fontSize: 24,
+    fontWeight: '800',
     letterSpacing: -0.4,
+    lineHeight: 30,
   },
-  greetingSubtext: {
-    color: Colors.primary,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
+  headerSubtitle: {
+    color: COLORS.secondaryText,
+    fontSize: 13,
+    fontWeight: '400',
     marginTop: 2,
   },
-  headerRightGroup: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
-    marginLeft: Spacing.sm,
+    gap: 10,
+    paddingTop: 2,
   },
-  bellBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.card,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+  bellButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
-  unreadBadge: {
+  bellNotificationDot: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: Colors.error,
-    borderRadius: 9,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: Colors.background,
+    top: 9,
+    right: 10,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: COLORS.secondary,
   },
-  unreadBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: FontWeight.bold,
-  },
-  avatarWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.card,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarStreakPill: {
-    position: 'absolute',
-    bottom: -6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.cardSecondary,
-    borderWidth: 1,
-    borderColor: Colors.warning,
-    borderRadius: Radius.full,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    gap: 2,
-  },
-  avatarStreakText: {
-    color: Colors.warning,
-    fontSize: 9,
-    fontWeight: FontWeight.bold,
-  },
-
-  // Loading
-  loadingContainer: {
-    paddingVertical: Spacing.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.md,
-  },
-  loadingText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-  },
-
-  // Error Card
-  errorCard: {
-    backgroundColor: Colors.errorFaded,
-    borderColor: Colors.error,
-    borderWidth: 1,
-    marginBottom: Spacing.base,
-    padding: Spacing.md,
-  },
-  errorInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  errorTextCol: {
-    flex: 1,
-  },
-  errorTitle: {
-    color: Colors.error,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-  errorDesc: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    marginTop: 2,
-  },
-  retryBtn: {
-    padding: Spacing.xs,
-  },
-
-  // Streak Banner
-  streakBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-  },
-  streakLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  streakFlameIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: `${Colors.warning}18`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  streakTitle: {
-    color: Colors.text,
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-  },
-  streakSub: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    marginTop: 2,
-  },
-
-  // Focus Timer Hero Banner
-  focusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: `${Colors.primary}40`,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-  },
-  focusBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  focusIconBg: {
+  avatarButton: {
     width: 42,
     height: 42,
-    borderRadius: Radius.md,
-    backgroundColor: `${Colors.primary}20`,
+    borderRadius: 12,
+    backgroundColor: COLORS.card,
+    borderWidth: 1.5,
+    borderColor: `${COLORS.primary}80`,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  focusBannerTitle: {
-    color: Colors.text,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-  },
-  focusBannerSub: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    marginTop: 2,
-  },
-  focusBannerBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.full,
-  },
-  focusBannerBtnText: {
-    color: '#fff',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-  },
-
-  // Stats Row
-  statsRow: {
-    gap: Spacing.sm,
-    paddingRight: Spacing.base,
-    paddingBottom: Spacing.base,
-  },
-  statCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    minWidth: 140,
-    borderLeftWidth: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  statIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  statValue: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.3,
-  },
-  statLabel: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-    marginTop: 2,
-  },
-  statSub: {
-    color: Colors.textMuted,
-    fontSize: 10,
-    marginTop: 2,
-  },
-
-  // Chart Card
-  chartCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.base,
-  },
-  chartTitle: {
-    color: Colors.text,
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-  },
-  chartSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    marginTop: 2,
-  },
-  barsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 120,
-    paddingTop: Spacing.sm,
-  },
-  barColumn: {
-    flex: 1,
-    alignItems: 'center',
+  avatarInner: {
+    width: '100%',
     height: '100%',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  barValueText: {
-    color: Colors.textSecondary,
-    fontSize: 9,
+  avatarText: {
+    color: COLORS.accent,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  avatarStatusDot: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLORS.success,
+    borderWidth: 1.5,
+    borderColor: COLORS.background,
+  },
+
+  // Daily Progress Card
+  dailyProgressCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  dailyProgressLeft: {
+    flex: 1,
+    paddingRight: 14,
+  },
+  progressPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.secondary}14`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    gap: 5,
+    marginBottom: 8,
+  },
+  progressPillText: {
+    color: COLORS.secondary,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  dailyProgressTitle: {
+    color: COLORS.text,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.2,
     marginBottom: 4,
-    height: 12,
   },
-  barTrack: {
-    width: 14,
-    height: 80,
-    backgroundColor: Colors.cardSecondary,
-    borderRadius: 7,
-    justifyContent: 'flex-end',
+  dailyProgressSubtitle: {
+    color: COLORS.secondaryText,
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  linearTrack: {
+    height: 6,
+    backgroundColor: COLORS.progressTrack,
+    borderRadius: 3,
     overflow: 'hidden',
   },
-  barFill: {
-    width: '100%',
-    borderRadius: 7,
+  linearFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
   },
-  barDayLabel: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    marginTop: 6,
-    fontWeight: FontWeight.medium,
-  },
-  barDayLabelToday: {
-    color: Colors.primary,
-    fontWeight: FontWeight.bold,
-  },
-  viewAnalyticsLink: {
-    flexDirection: 'row',
+  dailyProgressRight: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingTop: Spacing.sm,
-    marginTop: Spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border + '60',
   },
-  viewAnalyticsLinkText: {
-    color: Colors.primary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.semibold,
+  progressRingContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressTrackRing: {
+    position: 'absolute',
+  },
+  progressActiveRing: {
+    position: 'absolute',
+  },
+  progressRingCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressPercentText: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.4,
   },
 
-  // Quick Actions
-  sectionHeader: {
+  // Section Headers
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
   },
-  sectionTitleRow: {
+  sectionTitleWithCount: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 8,
   },
   sectionTitle: {
-    color: Colors.text,
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
-  seeAll: {
+  countBadge: {
+    backgroundColor: COLORS.elevatedCard,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  countBadgeText: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  realtimePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.secondary}14`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    gap: 4,
+  },
+  realtimePillText: {
+    color: COLORS.secondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  viewAllBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  seeAllText: {
-    color: Colors.primary,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.base,
-  },
-  quickAction: {
-    flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-  },
-  quickActionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionLabel: {
-    color: Colors.text,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
+  viewAllText: {
+    color: COLORS.secondary,
+    fontSize: 12,
+    fontWeight: '600',
   },
 
-  // Tasks List
-  tasksList: {
-    gap: Spacing.xs,
-    marginBottom: Spacing.base,
-  },
-  taskCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
-  },
-  taskRow: {
+  // Stats Row
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    gap: 10,
+    marginBottom: 24,
   },
-  taskCheckIcon: {
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 12,
+    alignItems: 'flex-start',
+  },
+  statIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 10,
   },
-  taskInfo: {
-    flex: 1,
+  statValue: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
-  taskTitle: {
-    color: Colors.text,
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold,
-  },
-  taskTitleCompleted: {
-    color: Colors.textMuted,
-    textDecorationLine: 'line-through',
-  },
-  taskMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
+  statLabel: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
+    fontWeight: '500',
     marginTop: 2,
   },
-  taskSubject: {
-    color: Colors.secondary,
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
+
+  // Today's Schedule List
+  scheduleList: {
+    gap: 10,
+    marginBottom: 24,
   },
-  taskBullet: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
+  scheduleCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderLeftWidth: 3.5,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  taskDuration: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
+  scheduleTimeCol: {
+    minWidth: 70,
+  },
+  scheduleTimeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  scheduleDurationText: {
+    color: COLORS.mutedText,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  scheduleDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 10,
+  },
+  scheduleDetailsCol: {
+    flex: 1,
+  },
+  scheduleSubjectRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  scheduleSubjectTitle: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statusBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  scheduleTopicText: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
+    marginTop: 3,
   },
 
-  // Exams List
+  // Upcoming Exams List
   examsList: {
-    gap: Spacing.xs,
-    marginBottom: Spacing.base,
+    gap: 10,
+    marginBottom: 16,
   },
   examCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    marginBottom: Spacing.xs,
+    borderColor: COLORS.border,
+    padding: 14,
   },
-  examRow: {
+  examHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  examIconAndInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 10,
+    flex: 1,
+    paddingRight: 8,
   },
-  examIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
-    backgroundColor: `${Colors.warning}18`,
+  examIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  examInfo: {
+  examTitleWrap: {
     flex: 1,
   },
-  examTitle: {
-    color: Colors.text,
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold,
+  examSubjectTitle: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '700',
   },
-  examSubject: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xs,
-    marginTop: 2,
-    marginBottom: 4,
-  },
-  syllabusProgressTrack: {
-    height: 4,
-    backgroundColor: Colors.cardSecondary,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginTop: 4,
-    marginBottom: 2,
-  },
-  syllabusProgressBar: {
-    height: '100%',
-    backgroundColor: Colors.warning,
-    borderRadius: 2,
-  },
-  syllabusProgressText: {
-    color: Colors.textMuted,
-    fontSize: 10,
+  examSubtitle: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
     marginTop: 2,
   },
   countdownPill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.cardSecondary,
-    borderRadius: Radius.md,
+    backgroundColor: COLORS.elevatedCard,
     borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
     minWidth: 54,
   },
-  countdownNumber: {
-    color: Colors.warning,
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+  countdownValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  countdownUnit: {
-    color: Colors.textMuted,
+  countdownLabel: {
+    color: COLORS.secondaryText,
     fontSize: 9,
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
-
-  // Empty state container
-  emptyCard: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    marginBottom: Spacing.base,
+  examFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: `${COLORS.border}80`,
+    paddingTop: 10,
+  },
+  examDateTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  examDateText: {
+    color: COLORS.secondaryText,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  examSyllabusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  examSyllabusPercent: {
+    color: COLORS.secondary,
+    fontSize: 11,
+    fontWeight: '600',
   },
 
-  bottomPad: { height: Spacing.xxxl },
+  bottomSpacer: {
+    height: 40,
+  },
 });

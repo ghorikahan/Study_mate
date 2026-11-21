@@ -111,9 +111,9 @@ const formatDate = (dateStr: string): string => {
 };
 
 const formatDuration = (minutes?: number): string => {
-  const mins = minutes && !isNaN(minutes) ? minutes : 180;
+  const mins = minutes && !isNaN(minutes) ? minutes : 180;  
   const h = Math.floor(mins / 60);
-  const m = mins % 60;
+  const m = mins % 60;  
   if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
 };
@@ -154,7 +154,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
         </View>
         <View style={styles.cardHeaderRight}>
           <Text style={[styles.countdown, { color: countdown.color }]}>{countdown.label}</Text>
-          <Text style={[styles.countdownLabel, { color: countdown.color }]}>remaining</Text>  
+          <Text style={[styles.countdownLabel, { color: countdown.color }]}>remaining</Text>
         </View>
       </View>
 
@@ -199,7 +199,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam, onEdit, onDelete }) => {
           </Text>
         </View>
         <View
-          style={[
+          style={[  
             styles.badge,
             {
               backgroundColor: (STATUS_COLORS[exam.status] || '#10B981') + '22',

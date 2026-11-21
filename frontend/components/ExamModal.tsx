@@ -12,27 +12,28 @@ import {
   Platform,
 } from 'react-native';
 import { Exam, ExamPriority, CreateExamInput, UpdateExamInput, SyllabusTopic } from '../types/exam';
+import { Colors } from '../constants/colors';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0B0D12',
-  card: '#151923',
-  cardAlt: '#1C2333',
-  primary: '#8B5CF6',
-  secondary: '#22D3EE',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  border: '#374151',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
+  bg: Colors.background,
+  card: Colors.card,
+  cardAlt: Colors.cardSecondary,
+  primary: Colors.primary,
+  secondary: Colors.secondary,
+  text: Colors.text,
+  textMuted: Colors.textMuted,
+  border: Colors.border,
+  error: Colors.error,
+  warning: Colors.warning,
+  success: Colors.success,
 };
 
 const PRIORITY_COLORS: Record<ExamPriority, string> = {
-  urgent: '#EF4444',
-  high: '#F59E0B',
-  medium: '#8B5CF6',
-  low: '#10B981',
+  urgent: Colors.error,
+  high: Colors.warning,
+  medium: Colors.primary,
+  low: Colors.success,
 };
 
 const PRIORITY_LABELS: Record<ExamPriority, string> = {

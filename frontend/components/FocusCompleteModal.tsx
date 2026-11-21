@@ -10,19 +10,20 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Colors } from '../constants/colors';
 
 const C = {
-  bg: '#0B0D12',
-  card: '#151923',
-  cardAlt: '#1C2333',
-  primary: '#8B5CF6',
-  secondary: '#22D3EE',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  border: '#374151',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
+  bg: Colors.background,
+  card: Colors.card,
+  cardAlt: Colors.cardSecondary,
+  primary: Colors.primary,
+  secondary: Colors.secondary,
+  text: Colors.text,
+  textMuted: Colors.textMuted,
+  border: Colors.border,
+  error: Colors.error,
+  warning: Colors.warning,
+  success: Colors.success,
 };
 
 interface FocusCompleteModalProps {

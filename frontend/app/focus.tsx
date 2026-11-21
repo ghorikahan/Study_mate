@@ -15,21 +15,22 @@ import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle, Flame, Award, Clock } f
 import { useFocusTimer, MODE_LABELS } from '../hooks/useFocusTimer';
 import FocusCompleteModal from '../components/FocusCompleteModal';
 import { SessionType } from '../types/studySession';
+import { Colors } from '../constants/colors';
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 const C = {
-  bg: '#0B0D12',
-  card: '#151923',
-  cardAlt: '#1C2333',
-  primary: '#8B5CF6',
-  primaryLight: '#A78BFA',
-  secondary: '#22D3EE',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  border: '#374151',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  success: '#10B981',
+  bg: Colors.background,
+  card: Colors.card,
+  cardAlt: Colors.cardSecondary,
+  primary: Colors.primary,
+  primaryLight: Colors.primaryLight,
+  secondary: Colors.secondary,
+  text: Colors.text,
+  textMuted: Colors.textMuted,
+  border: Colors.border,
+  error: Colors.error,
+  warning: Colors.warning,
+  success: Colors.success,
 };
 
 const POPULAR_SUBJECTS = [

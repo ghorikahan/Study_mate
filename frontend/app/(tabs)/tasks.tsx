@@ -145,8 +145,7 @@ export default function TasksScreen() {
       // 2. Subject Filter
       if (
         selectedSubject !== 'All' &&
-        (task.subject || '').toLowerCase() !== (selectedSubject || '').toLowerCase()
-      ) {
+        (task.subject || '').toLowerCase() !== (selectedSubject || '').toLowerCase()) {
         return false;
       }
 
@@ -487,23 +486,23 @@ export default function TasksScreen() {
                 searchQuery
                   ? 'No matching tasks found'
                   : selectedSubject !== 'All'
-                  ? `No tasks for ${selectedSubject}`
-                  : selectedPriority !== 'All'
-                  ? `No ${selectedPriority} priority tasks`
-                  : activeTab === 'Overdue'
-                  ? 'No overdue tasks 🎉'
-                  : activeTab === 'Completed'
-                  ? 'No completed tasks yet'
-                  : 'No tasks yet'
+                    ? `No tasks for ${selectedSubject}`
+                    : selectedPriority !== 'All'
+                      ? `No ${selectedPriority} priority tasks`
+                      : activeTab === 'Overdue'
+                        ? 'No overdue tasks 🎉'
+                        : activeTab === 'Completed'
+                          ? 'No completed tasks yet'
+                          : 'No tasks yet'
               }
               description={
                 hasActiveFilters
                   ? 'Try searching with different keywords or clearing your active filters.'
                   : activeTab === 'Overdue'
-                  ? 'Great job keeping up with all your deadlines!'
-                  : activeTab === 'Completed'
-                  ? 'Check off tasks as you finish them to track your productivity.'
-                  : 'Add a new task to organize your study schedule and beat deadlines.'
+                    ? 'Great job keeping up with all your deadlines!'
+                    : activeTab === 'Completed'
+                      ? 'Check off tasks as you finish them to track your productivity.'
+                      : 'Add a new task to organize your study schedule and beat deadlines.'
               }
               actionLabel={hasActiveFilters ? 'Reset Filters' : 'Add First Task'}
               onAction={hasActiveFilters ? handleResetFilters : handleOpenCreate}

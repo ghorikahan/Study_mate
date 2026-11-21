@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SubjectDistributionItem } from '../../types/analytics';
+import { Colors } from '../../constants/colors';
 
 const C = {
-  card: '#151923',
-  cardAlt: '#1C2333',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  border: '#374151',
-  warning: '#F59E0B',
+  card: Colors.card,
+  cardAlt: Colors.cardSecondary,
+  text: Colors.text,
+  textMuted: Colors.textMuted,
+  border: Colors.border,
+  warning: Colors.warning,
 };
 
 interface SubjectDistributionCardProps {
