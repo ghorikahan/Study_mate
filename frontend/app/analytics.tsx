@@ -68,9 +68,9 @@ export default function AnalyticsScreen() {
   const score = data?.productivityScore || 50;
   const scoreLabel =
     score >= 80 ? '🔥 High Momentum'
-    : score >= 60 ? '✨ Solid Progress'
-    : score >= 40 ? '⚡ Building Habits'
-    : '🌱 Starting Out';
+      : score >= 60 ? '✨ Solid Progress'
+        : score >= 40 ? '⚡ Building Habits'
+          : '🌱 Starting Out';
 
   return (
     <SafeAreaView style={styles.container}>
