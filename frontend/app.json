@@ -9,15 +9,17 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B0D12",
     "splash": {
-      "backgroundColor": "#0B0D12",
-      "resizeMode": "contain"
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0D12"
     },
     "android": {
+      "package": "com.studymate.app",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#0B0D12",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "package": "com.studymate.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -26,10 +28,23 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "2cd7dd97-5775-45d2-bb1b-7778575078b7"
+      }
     }
   }
 }
