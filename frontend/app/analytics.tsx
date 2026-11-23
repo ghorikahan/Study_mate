@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  StatusBar,
+  StatusBar,  
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft,
-  Flame,
+  Flame,     
   Clock,
   Award,
   Zap,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   focusCtaSub: {
-    color: '#fff' + 'CC',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 12,
     marginTop: 2,
   },
@@ -449,4 +449,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-
