@@ -65,6 +65,48 @@ export default function AnalyticsScreen() {
     );
   }
 
+  if (!loading && !data && error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <ArrowLeft size={22} color={C.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Analytics & Insights</Text>
+          <TouchableOpacity style={styles.refreshBtn} onPress={refresh}>
+            <RotateCw size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.centerLoading}>
+          <Text style={{ fontSize: 40, marginBottom: 12 }}>⚠️</Text>
+          <Text style={{ color: C.text, fontSize: 16, fontWeight: '700', textAlign: 'center' }}>
+            Unable to Load Analytics
+          </Text>
+          <Text style={{ color: C.textMuted, fontSize: 13, textAlign: 'center', paddingHorizontal: 30, marginTop: 4 }}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: C.primary,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: 12,
+              marginTop: 18,
+            }}
+            onPress={refresh}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const score = data?.productivityScore || 50;
   const scoreLabel =
     score >= 80 ? '🔥 High Momentum'
@@ -152,7 +194,7 @@ export default function AnalyticsScreen() {
             <View style={[styles.metricIconWrap, { backgroundColor: C.secondary + '18' }]}>
               <Clock size={18} color={C.secondary} />
             </View>
-            <Text style={styles.metricVal}>{data?.studyTime.totalHours ?? 0}h</Text>
+            <Text style={styles.metricVal}>{data?.studyTime?.totalHours ?? 0}h</Text>
             <Text style={styles.metricLbl}>Total Focus Time</Text>
           </View>
 
@@ -161,7 +203,7 @@ export default function AnalyticsScreen() {
             <View style={[styles.metricIconWrap, { backgroundColor: C.primary + '18' }]}>
               <Award size={18} color={C.primary} />
             </View>
-            <Text style={styles.metricVal}>{data?.focusMetrics.totalSessions ?? 0}</Text>
+            <Text style={styles.metricVal}>{data?.focusMetrics?.totalSessions ?? 0}</Text>
             <Text style={styles.metricLbl}>Sessions Done</Text>
           </View>
 
@@ -170,7 +212,7 @@ export default function AnalyticsScreen() {
             <View style={[styles.metricIconWrap, { backgroundColor: C.warning + '18' }]}>
               <Flame size={18} color={C.warning} />
             </View>
-            <Text style={styles.metricVal}>{data?.streak.currentStreak ?? 0}d</Text>
+            <Text style={styles.metricVal}>{data?.streak?.currentStreak ?? 0}d</Text>
             <Text style={styles.metricLbl}>Current Streak</Text>
           </View>
 
@@ -179,16 +221,16 @@ export default function AnalyticsScreen() {
             <View style={[styles.metricIconWrap, { backgroundColor: C.success + '18' }]}>
               <Zap size={18} color={C.success} />
             </View>
-            <Text style={styles.metricVal}>{data?.studyTime.dailyAverageHours ?? 0}h</Text>
+            <Text style={styles.metricVal}>{data?.studyTime?.dailyAverageHours ?? 0}h</Text>
             <Text style={styles.metricLbl}>Daily Average</Text>
           </View>
         </View>
 
         {/* ── Daily Study Hours Chart ── */}
-        {data?.studyTime.dailyBreakdown && data.studyTime.dailyBreakdown.length > 0 ? (
+        {data?.studyTime?.dailyBreakdown && data.studyTime.dailyBreakdown.length > 0 ? (
           <StudyHoursChart
             data={data.studyTime.dailyBreakdown}
-            goalHours={data.studyTime.weeklyGoalHours}
+            goalHours={data?.studyTime?.weeklyGoalHours}
           />
         ) : null}
 

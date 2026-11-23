@@ -23,7 +23,9 @@ interface MonthlyProgressCardProps {
 }
 
 export const MonthlyProgressCard: React.FC<MonthlyProgressCardProps> = ({ progress }) => {
-  const { monthHours, monthlyGoalHours, monthlyProgressPercent } = progress;
+  const monthHours = Number(progress?.monthHours) || 0;
+  const monthlyGoalHours = Number(progress?.monthlyGoalHours) || 80;
+  const monthlyProgressPercent = Math.min(100, Math.max(0, Number(progress?.monthlyProgressPercent) || 0));
   const remainingHours = Math.max(0, Math.round((monthlyGoalHours - monthHours) * 10) / 10);
 
   return (
@@ -43,7 +45,7 @@ export const MonthlyProgressCard: React.FC<MonthlyProgressCardProps> = ({ progre
         <View
           style={[
             styles.fill,
-            { width: `${Math.min(100, monthlyProgressPercent)}%` },
+            { width: `${monthlyProgressPercent}%` },
           ]}
         />
       </View>

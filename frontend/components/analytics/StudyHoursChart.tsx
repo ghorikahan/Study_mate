@@ -54,15 +54,16 @@ export const StudyHoursChart: React.FC<StudyHoursChartProps> = ({ data = [], goa
         {/* Bars Container */}
         <View style={styles.barsContainer}>
           {displayItems.map((item, idx) => {
-            const heightPercent = Math.min(100, Math.round((item.hours / maxHours) * 100));
+            const itemHours = Number(item.hours) || 0;
+            const heightPercent = Math.min(100, Math.max(0, Math.round((itemHours / (maxHours || 4)) * 100)));
             const barHeight = Math.max(8, (heightPercent / 100) * (CHART_HEIGHT - 30));
             const isToday = idx === displayItems.length - 1;
 
             return (
               <View key={item.date} style={styles.barColumn}>
                 {/* Value tooltip */}
-                <Text style={[styles.barValueText, item.hours > 0 && { color: isToday ? C.secondary : C.text }]}>
-                  {item.hours > 0 ? `${item.hours}h` : ''}
+                <Text style={[styles.barValueText, itemHours > 0 && { color: isToday ? C.secondary : C.text }]}>
+                  {itemHours > 0 ? `${itemHours}h` : ''}
                 </Text>
 
                 {/* Bar */}
@@ -72,7 +73,7 @@ export const StudyHoursChart: React.FC<StudyHoursChartProps> = ({ data = [], goa
                       styles.barFill,
                       {
                         height: barHeight,
-                        backgroundColor: isToday ? C.secondary : item.hours > 0 ? C.primary : C.cardAlt,
+                        backgroundColor: isToday ? C.secondary : itemHours > 0 ? C.primary : C.cardAlt,
                       },
                     ]}
                   />

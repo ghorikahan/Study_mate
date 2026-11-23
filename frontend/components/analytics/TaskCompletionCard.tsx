@@ -26,7 +26,11 @@ interface TaskCompletionCardProps {
 }
 
 export const TaskCompletionCard: React.FC<TaskCompletionCardProps> = ({ metrics }) => {
-  const { total, completed, pending, overdue, completionRate } = metrics;
+  const total = Number(metrics?.total) || 0;
+  const completed = Number(metrics?.completed) || 0;
+  const pending = Number(metrics?.pending) || 0;
+  const overdue = Number(metrics?.overdue) || 0;
+  const completionRate = Math.min(100, Math.max(0, Number(metrics?.completionRate) || 0));
 
   return (
     <View style={styles.container}>
@@ -50,7 +54,7 @@ export const TaskCompletionCard: React.FC<TaskCompletionCardProps> = ({ metrics 
           style={[
             styles.fill,
             {
-              width: `${Math.min(100, completionRate)}%`,
+              width: `${completionRate}%`,
               backgroundColor: completionRate >= 70 ? C.success : C.primary,
             },
           ]}

@@ -57,8 +57,8 @@ export const SubjectDistributionCard: React.FC<SubjectDistributionCardProps> = (
               <View>
                 <Text style={styles.subjectName}>{item.subject}</Text>
                 <Text style={styles.sessionsMeta}>
-                  {item.sessionsCount} session{item.sessionsCount === 1 ? '' : 's'} · Focus rating:{' '}
-                  <Text style={styles.starText}>{'★'.repeat(Math.round(item.avgRating))}</Text>
+                  {item.sessionsCount || 0} session{(item.sessionsCount || 0) === 1 ? '' : 's'} · Focus rating:{' '}
+                  <Text style={styles.starText}>{'★'.repeat(Math.max(0, Math.min(5, Math.round(Number(item.avgRating) || 0))))}</Text>
                 </Text>
               </View>
             </View>
