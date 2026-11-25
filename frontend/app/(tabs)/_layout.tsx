@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, Platform, StyleSheet, ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Home,
   BookOpen,
@@ -9,7 +10,7 @@ import {
   User,
 } from 'lucide-react-native';
 import { Colors } from '../../constants/colors';
-import { FontSize, Spacing, Radius } from '../../constants/theme';
+import { FontSize, Radius } from '../../constants/theme';
 
 interface TabIconProps {
   focused: boolean;
@@ -24,11 +25,27 @@ const TabIcon: React.FC<TabIconProps> = ({ focused, color, Icon }) => (
 );
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
+  // Uplift the tab bar significantly above Android navigation buttons / gesture pill
+  // Guarantee a generous bottom clearance (minimum 28px on Android, 20px on iOS, or insets.bottom + 6)
+  const bottomClearance = Math.max(
+    insets.bottom > 0 ? insets.bottom + 6 : 0,
+    Platform.OS === 'android' ? 28 : 20
+  );
+  const totalBarHeight = (Platform.OS === 'android' ? 62 : 56) + bottomClearance;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: totalBarHeight,
+            paddingBottom: bottomClearance,
+          },
+        ],
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
         tabBarLabelStyle: styles.tabLabel,
@@ -89,26 +106,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderTopColor: Colors.border,
     borderTopWidth: 1,
-    height: Platform.OS === 'android' ? 68 : 80,
-    paddingBottom: Platform.OS === 'android' ? Spacing.sm : Spacing.base,
-    paddingTop: Spacing.sm,
+    paddingTop: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 20,
   },
   tabItem: {
     paddingTop: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabLabel: {
     fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.1,
-    marginTop: 2,
+    marginTop: 3,
   },
   iconWrapper: {
-    width: 40,
+    width: 44,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
